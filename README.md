@@ -1,4 +1,6 @@
-# Wavelength Dashboard
+# Wavelength
+
+AI-powered wavelength dashboard with a React frontend and a Node backend for generating chart insights and AI responses.
 
 ## Setup
 
@@ -35,3 +37,10 @@ http://127.0.0.1:4180
 ```
 
 If no API key is set, the app still works with local fallback data.
+
+## Notes
+
+- Frontend: React + Vite
+- Backend: Node.js server
+- AI integration: OpenAI responses API
+- GitHub repo: https://github.com/TheAKSHAYY/Wavelength
