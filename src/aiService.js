@@ -6,15 +6,27 @@ const clean = (value, fallback = "your topic") => (value || fallback).trim();
 const scoreFrom = (text, offset = 0) => 62 + (([...text].reduce((sum, char) => sum + char.charCodeAt(0), offset) % 34));
 const pick = (list, seed) => list[Math.abs(seed) % list.length];
 
+function fetchWithTimeout(url, options, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 export async function generateResponse({ system = "", prompt = "", useWebSearch = false }) {
   try {
-    const response = await fetch("/api/generate", {
+    const response = await fetchWithTimeout("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ system, prompt, useWebSearch }),
-    });
+    }, 8000);
 
-    if (!response.ok) throw new Error("API unavailable");
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      if (err.error?.includes?.("quota") || err.error?.includes?.("429") || response.status === 429) {
+        throw new Error("QUOTA_EXCEEDED");
+      }
+      throw new Error("API unavailable");
+    }
     const data = await response.json();
     if (!data.text) throw new Error("Empty API response");
     if (!hasJSON(data.text)) throw new Error("API response did not include JSON");

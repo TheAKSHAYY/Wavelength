@@ -46,6 +46,16 @@ createServer(async (req, res) => {
   console.log(`Wavelength running at http://127.0.0.1:${port}`);
 });
 
+async function fetchWithTimeout(url, options, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 async function handleGenerate(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey === "your_openai_api_key_here") {
@@ -54,7 +64,7 @@ async function handleGenerate(req, res) {
   }
 
   const body = await readJson(req);
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetchWithTimeout("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,7 +79,7 @@ You are powering a production dashboard. Return exactly one valid JSON value and
       max_output_tokens: 2200,
       tools: body.useWebSearch ? [{ type: "web_search" }] : undefined,
     }),
-  });
+  }, 10000);
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
