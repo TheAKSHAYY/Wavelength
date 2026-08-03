@@ -1,8 +1,9 @@
 node_modules
 dist
 server/dist
-data
+.git
 .env
-.DS_Store
-*.local
+data
 coverage
+*.log
+npm-debug.log*

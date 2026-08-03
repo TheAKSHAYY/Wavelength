@@ -14,12 +14,17 @@ function list(value: string | undefined, fallback: string[]): string[] {
 }
 
 export const config = {
-  port: Number(process.env.PORT || 3001),
+  port: Number(process.env.PORT || 4180),
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   openaiModel: process.env.OPENAI_MODEL || "gpt-4o-mini",
   jwtSecret: process.env.JWT_SECRET || "dev-only-secret-change-me",
   jwtExpiresIn: "7d",
-  corsOrigins: list(process.env.CORS_ORIGIN, ["http://localhost:5173"]),
+  corsOrigins: list(process.env.CORS_ORIGIN, [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+  ]),
   apiToken: process.env.API_TOKEN || "",
   dbPath: process.env.DB_PATH || "./data/wavelength.db",
   youtubeApiKey: process.env.YOUTUBE_API_KEY || "",

@@ -34,7 +34,7 @@ interface TokenPayload {
 export function signToken(user: User): string {
   return jwt.sign({ email: user.email, name: user.name } as TokenPayload, config.jwtSecret, {
     subject: user.id,
-    expiresIn: config.jwtExpiresIn,
+    expiresIn: config.jwtExpiresIn as jwt.SignOptions["expiresIn"],
   });
 }
 
