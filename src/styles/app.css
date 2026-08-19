@@ -236,19 +236,21 @@ a {
   transform: scale(1.05);
 }
 
-.dropdown-popover {
-  position: absolute;
-  top: calc(100% + 8px);
+.dropdown-popover,
+.card.dropdown-popover {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
   right: 0 !important;
   left: auto !important;
-  width: 280px;
-  max-width: calc(100vw - 24px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
-  z-index: 500;
-  box-sizing: border-box;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: calc(100vw - 24px) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border) !important;
+  z-index: 500 !important;
+  box-sizing: border-box !important;
   animation: dropdownEnter 0.15s ease-out;
 }
 

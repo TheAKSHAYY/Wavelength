@@ -207,13 +207,15 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
 
             {notifOpen && (
               <div
-                className="card dropdown-popover"
+                className="dropdown-popover"
                 style={{
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
                   left: "auto",
-                  width: "min(340px, calc(100vw - 24px))",
+                  width: 320,
+                  minWidth: 300,
+                  maxWidth: "calc(100vw - 24px)",
                   padding: 16,
                   display: "flex",
                   flexDirection: "column",
@@ -295,13 +297,15 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
 
             {profileOpen && (
               <div
-                className="card dropdown-popover"
+                className="dropdown-popover"
                 style={{
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
                   left: "auto",
-                  width: "min(280px, calc(100vw - 24px))",
+                  width: 280,
+                  minWidth: 280,
+                  maxWidth: "calc(100vw - 24px)",
                   padding: 14,
                   display: "flex",
                   flexDirection: "column",
