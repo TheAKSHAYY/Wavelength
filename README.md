@@ -143,7 +143,7 @@ src/                    React + TypeScript frontend
   lib/parse.ts          robust JSON extraction from model output
   pages/                Dashboard, Trends, Competitors, Keywords, Ideas, Titles,
                         Script, ImageGenerator, Package, FieldResearch, Calendar,
-                        Analytics, Settings, Auth
+                        Analytics, Profile, Settings, Auth
   components/           Sidebar, TopNav, Chat, Upload, SharedUI
 ```
 
@@ -154,7 +154,9 @@ src/                    React + TypeScript frontend
 | `POST /api/auth/register` | – | Create account (sets session cookie) |
 | `POST /api/auth/login` | – | Sign in (sets session cookie) |
 | `POST /api/auth/logout` | – | Clear session |
-| `GET /api/auth/me` | cookie | Current user |
+| `GET /api/auth/me` | cookie | Current user profile & preferences |
+| `PUT /api/auth/profile` | cookie | Update creator persona, social links & channel details |
+| `PUT /api/auth/password` | cookie | Secure password update |
 | `GET /api/state` | cookie | Load the user's app state |
 | `PUT /api/state` | cookie | Save the user's app state |
 | `POST /api/generate` | cookie or token | Proxy to OpenAI Responses API / Real data fallback |
