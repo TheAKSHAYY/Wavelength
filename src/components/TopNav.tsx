@@ -209,10 +209,16 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
               <div
                 className="card dropdown-popover"
                 style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  left: "auto",
+                  width: "min(340px, calc(100vw - 24px))",
                   padding: 16,
                   display: "flex",
                   flexDirection: "column",
                   gap: 10,
+                  zIndex: 500,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -291,11 +297,16 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
               <div
                 className="card dropdown-popover"
                 style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  left: "auto",
                   width: "min(280px, calc(100vw - 24px))",
-                  padding: 16,
+                  padding: 14,
                   display: "flex",
                   flexDirection: "column",
-                  gap: 12,
+                  gap: 10,
+                  zIndex: 500,
                 }}
               >
                 <div
@@ -303,7 +314,7 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    paddingBottom: 10,
+                    padding: "4px 6px 10px 6px",
                     borderBottom: "1px solid var(--border)",
                     cursor: "pointer",
                   }}
@@ -314,7 +325,14 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                 >
                   <div
                     className="avatar"
-                    style={{ background: user?.avatar_color || undefined, color: "#fff", fontWeight: 700 }}
+                    style={{
+                      background: user?.avatar_color || undefined,
+                      color: "#fff",
+                      fontWeight: 700,
+                      width: 36,
+                      height: 36,
+                      borderRadius: "var(--radius-md)",
+                    }}
                   >
                     {initials(user?.name || user?.email || "Admin")}
                   </div>
@@ -328,16 +346,15 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <button
                     onClick={() => {
                       setProfileOpen(false);
                       navigate("/profile");
                     }}
-                    className="btn btn-ghost"
-                    style={{ justifyContent: "flex-start", fontSize: 12.5, padding: "8px 10px" }}
+                    className="dropdown-menu-item"
                   >
-                    <User size={14} /> Creator Profile & Persona
+                    <User size={15} color="var(--accent-primary)" /> Creator Profile & Persona
                   </button>
 
                   <button
@@ -345,10 +362,9 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                       setProfileOpen(false);
                       navigate("/settings");
                     }}
-                    className="btn btn-ghost"
-                    style={{ justifyContent: "flex-start", fontSize: 12.5, padding: "8px 10px" }}
+                    className="dropdown-menu-item"
                   >
-                    <Settings size={14} /> Dashboard Settings
+                    <Settings size={15} /> Dashboard Settings
                   </button>
 
                   <button
@@ -356,10 +372,10 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                       setProfileOpen(false);
                       toggleTheme();
                     }}
-                    className="btn btn-ghost"
-                    style={{ justifyContent: "flex-start", fontSize: 12.5, padding: "8px 10px" }}
+                    className="dropdown-menu-item"
                   >
-                    {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />} {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                    {theme === "dark" ? <Sun size={15} color="var(--accent-amber)" /> : <Moon size={15} color="var(--accent-primary)" />}{" "}
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
                   </button>
 
                   <button
@@ -368,10 +384,9 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                       handleLogout();
                     }}
                     disabled={loggingOut}
-                    className="btn btn-ghost"
-                    style={{ justifyContent: "flex-start", fontSize: 12.5, padding: "8px 10px", color: "var(--accent-red, #ef4444)" }}
+                    className="dropdown-menu-item danger"
                   >
-                    {loggingOut ? <Loader2 size={14} className="spin" /> : <LogOut size={14} />} Log Out
+                    {loggingOut ? <Loader2 size={15} className="spin" /> : <LogOut size={15} />} Log Out
                   </button>
                 </div>
               </div>
