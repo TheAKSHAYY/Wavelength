@@ -64,6 +64,9 @@ npm run dev
 Starts the backend (port 3001) and frontend (port 5173) together. Open
 **http://localhost:5173**, create an account, and you're in.
 
+> **Want to skip registration?** Run `npm run seed:dev` to create a ready-to-sign-in
+> local account (`admin@wavelength.local` / `password123`), then sign in on the login screen.
+
 ## Available scripts
 
 | Command | What it does |
@@ -71,6 +74,7 @@ Starts the backend (port 3001) and frontend (port 5173) together. Open
 | `npm run dev` | Backend + frontend together (local dev) |
 | `npm run dev:server` | Backend only (tsx watch) |
 | `npm run dev:client` | Frontend only (Vite) |
+| `npm run seed:dev` | Seed a dev account (email `admin@wavelength.local` / password `password123`) |
 | `npm run build` | Type-check-compiles the server and builds the client |
 | `npm run server` | Runs the compiled server from `server/dist` |
 | `npm run preview` | Serves the production client build locally |
@@ -121,19 +125,26 @@ Open **http://localhost:8080**. The web service serves the client and proxies
 ## Architecture
 
 ```
-server/            Express + TypeScript backend
-  index.ts         app setup, CORS, routes
-  db.ts            SQLite (node:sqlite) users + per-user state
-  auth.ts          scrypt hashing + JWT
-  middleware.ts    requireAuth, rate limits
-  routes/          auth, state, generate (AI proxy), youtube
-src/               React + TypeScript frontend
-  lib/store.tsx    auth + server-backed app state (Context)
-  lib/ai.ts        generateJSON() with zod validation
-  lib/schemas.ts   zod schemas for every AI panel
-  lib/parse.ts     robust JSON extraction from model output
-  pages/           one page per sidebar route
-  components/      Layout, SharedUI
+server/                 Express + TypeScript backend
+  index.ts              app setup, CORS, routes
+  db.ts                 SQLite (node:sqlite) users + per-user state
+  auth.ts               scrypt hashing + JWT
+  middleware.ts         requireAuth, rate limits
+  services/             
+    titleIntelligence.ts   10-framework Title Intelligence & CTR heuristic scoring
+    scriptIntelligence.ts  Creator-grade Script Engine (English, Hinglish, Hindi)
+    youtubeResearch.ts     Live YouTube search & statistics integration
+    realDataSynthesizer.ts Real data synthesis fallback
+  routes/               auth, state, generate, gemini, chat, youtube
+src/                    React + TypeScript frontend
+  lib/store.tsx         auth + server-backed app state (Context)
+  lib/ai.ts             generateJSON() with zod validation
+  lib/schemas.ts        zod schemas for every AI panel
+  lib/parse.ts          robust JSON extraction from model output
+  pages/                Dashboard, Trends, Competitors, Keywords, Ideas, Titles,
+                        Script, ImageGenerator, Package, FieldResearch, Calendar,
+                        Analytics, Settings, Auth
+  components/           Sidebar, TopNav, Chat, Upload, SharedUI
 ```
 
 ## API
@@ -146,6 +157,10 @@ src/               React + TypeScript frontend
 | `GET /api/auth/me` | cookie | Current user |
 | `GET /api/state` | cookie | Load the user's app state |
 | `PUT /api/state` | cookie | Save the user's app state |
-| `POST /api/generate` | cookie or `API_TOKEN` | Proxy to OpenAI Responses API |
+| `POST /api/generate` | cookie or token | Proxy to OpenAI Responses API / Real data fallback |
+| `POST /api/generate/title-intelligence` | cookie or token | 10-framework research-backed title generator |
+| `POST /api/generate/script` | cookie or token | Creator-grade script engine (English/Hinglish/Hindi) |
+| `POST /api/gemini/generate-image` | cookie or token | 16:9 YouTube Thumbnail Generator (Gemini/Imagen) |
+| `POST /api/chat` | cookie or token | Conversational YouTube strategist chat |
 | `GET /api/youtube/analytics` | cookie | Real view counts (optional) |
 | `GET /api/health` | – | Health check |

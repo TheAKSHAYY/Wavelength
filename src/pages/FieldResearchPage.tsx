@@ -25,16 +25,14 @@ export default function FieldResearchPage() {
 
       const researchText = await generateJSON(researchSchema, {
         useWebSearch: true,
-        system:
-          "Search the web for the current state of this field as YouTube content: what's being covered, what audiences are asking for, and what's under-served. Respond with ONLY compact JSON, no markdown fences: " +
-          '{"summary":"string, 1-2 sentences on the current landscape","subtopics":["string" x5, the key sub-areas within this field],"gaps":["string" x3, under-covered angles],"audienceNeeds":"string, 1 sentence on what the audience actually wants"}',
+        system: "Search the web for the current state of this field as YouTube content. Respond with ONLY compact JSON: " +
+          '{"summary":"string, 1-2 sentences on the current landscape","subtopics":["string" x5],"gaps":["string" x3],"audienceNeeds":"string, 1 sentence"}',
         prompt: `Field/topic: ${topic}\n\nResearch the current YouTube content landscape for this field.`,
       });
       setResearch(researchText);
 
       const planText = await generateJSON(planItemSchema.array().min(1).max(10), {
-        system:
-          'Based on the research, create a 5-video YouTube content roadmap for this field, ordered as a logical viewer journey. Respond with ONLY a JSON array of 5 objects, no markdown fences: [{"order":number,"title":"string, an actual clickable title","angle":"string, 1 sentence on the unique angle","format":"string, e.g. Tutorial / Deep-dive / Comparison / Short","priority":"High"|"Medium"|"Low"}]',
+        system: 'Based on the research, create a 5-video YouTube content roadmap. Respond with ONLY a JSON array of 5 objects: [{"order":number,"title":"string","angle":"string","format":"string","priority":"High"|"Medium"|"Low"}]',
         prompt: `Field: ${topic}\nResearch findings: ${JSON.stringify(researchText)}\n\nBuild a 5-video content plan/roadmap for this field, ordered logically.`,
       });
       setVideoPlan(withIds(planText));
@@ -45,8 +43,7 @@ export default function FieldResearchPage() {
     setScriptingId(id);
     try {
       const parsed = await generateJSON(scriptSchema, {
-        system:
-          'Write a YouTube script outline for the given video, aimed at a junior-developer / CS-student audience. Respond with ONLY JSON, no markdown fences: {"hook":"string, 1-2 sentences, scroll-stopping","intro":"string, 1-2 sentences","sections":[{"heading":"string","content":"string, 1-2 sentences"}],"cta":"string"}',
+        system: 'Write a YouTube script outline for the given video. Respond with ONLY JSON: {"hook":"string","intro":"string","sections":[{"heading":"string","content":"string"}],"cta":"string"}',
         prompt: `Video title: ${item.title}\nAngle: ${item.angle}\nFormat: ${item.format}`,
       });
       setPlanScripts({ ...planScripts, [id]: parsed });
@@ -58,111 +55,101 @@ export default function FieldResearchPage() {
     }
   };
 
-  const mono = { color: "var(--accent-amber)", fontFamily: "var(--font-mono)", fontSize: 10.5 };
-
   return (
-    <div className="hero-card" style={{ marginBottom: 24, padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-        <div style={{ background: "rgba(255,176,32,0.14)", borderRadius: 9, padding: 7 }}>
-          <Compass size={16} color="var(--accent-amber)" />
+    <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: 0 }}>Field Research</h1>
+        <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 14 }}>Research any field and get a complete video plan</p>
+      </div>
+
+      <div className="hero-card" style={{ padding: "clamp(16px, 3vw, 24px)" }}>
+        <div className="search-bar-row" style={{ marginBottom: research || videoPlan.length ? 18 : 0 }}>
+          <input
+            className="input"
+            style={{ flex: 1, fontSize: 14, padding: "10px 14px" }}
+            placeholder="e.g. System Design, DSA for interviews, Android development"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && researchAndPlan()}
+          />
+          <button className="btn" style={{ padding: "10px 20px", fontSize: 13.5 }} onClick={researchAndPlan} disabled={!!loading}>
+            {loading ? <Loader2 size={15} className="spin" /> : <Compass size={15} />}
+            {loading ? "Working..." : "Research & plan"}
+          </button>
         </div>
-        <div className="muted" style={{ fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Start here</div>
-      </div>
-      <h2 style={{ fontFamily: "var(--font-display)", fontSize: 21, fontWeight: 600, margin: "0 0 4px 0" }}>
-        Give it any field — get a full video plan
-      </h2>
-      <div className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
-        It researches the field on the web, then maps a 5-video roadmap. Script any video in the plan with one click.
-      </div>
-      <div style={{ display: "flex", gap: 8, marginBottom: research || videoPlan.length ? 18 : 0 }}>
-        <input
-          className="input"
-          style={{ flex: 1, fontSize: 14, padding: "11px 14px" }}
-          placeholder="e.g. System Design, DSA for interviews, Android development"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && researchAndPlan()}
-        />
-        <button className="btn" style={{ padding: "11px 20px", fontSize: 13.5 }} onClick={researchAndPlan} disabled={loading || !topic.trim()}>
-          {loading ? <Loader2 size={15} className="spin" /> : <Compass size={15} />}
-          {loading ? "Working..." : "Research & plan"}
-        </button>
-      </div>
 
-      <ErrorBanner message={error} onRetry={clearError} />
+        <ErrorBanner message={error} onRetry={clearError} />
+        {loading && !research && <Spinner label="Researching the field on the web..." />}
 
-      {loading && !research && <Spinner label="Researching the field on the web..." />}
-
-      {research && (
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 13, marginBottom: 10, lineHeight: 1.5 }}>{research.summary}</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-            {(research.subtopics || []).map((s, i) => (
-              <span key={i} className="pill" style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}>{s}</span>
-            ))}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))", gap: 10, fontSize: 12 }}>
-            <div>
-              <span className="muted" style={{ fontSize: 11 }}>CONTENT GAPS</span>
-              <ul style={{ margin: "4px 0 0 16px", padding: 0, color: "var(--text-muted)" }}>
-                {(research.gaps || []).map((g, i) => <li key={i} style={{ marginBottom: 2 }}>{g}</li>)}
-              </ul>
+        {research && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 13, marginBottom: 10, lineHeight: 1.5 }}>{research.summary}</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {(research.subtopics || []).map((s, i) => (
+                <span key={i} className="pill pill-neutral">{s}</span>
+              ))}
             </div>
-            <div>
-              <span className="muted" style={{ fontSize: 11 }}>AUDIENCE NEEDS</span>
-              <div style={{ marginTop: 4, color: "var(--text-muted)" }}>{research.audienceNeeds}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {loading && research && <Spinner label="Building the 5-video roadmap..." />}
-
-      {videoPlan.length > 0 && (
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <ListChecks size={15} color="var(--accent-amber)" />
-            <div style={{ fontFamily: "var(--font-display)", fontSize: 14.5, fontWeight: 600 }}>5-video roadmap</div>
-          </div>
-          {videoPlan.map((item) => {
-            const script = planScripts[item.id];
-            const expanded = expandedId === item.id;
-            return (
-              <div key={item.id} style={{ background: "var(--surface-2)", borderRadius: 10, marginBottom: 8, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", width: 18 }}>{item.order}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13 }}>{item.title}</div>
-                    <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{item.angle}</div>
-                  </div>
-                  <span className="pill" style={{ background: item.priority === "High" ? "rgba(110,231,183,0.12)" : "var(--surface)", color: item.priority === "High" ? "var(--accent-mint)" : "var(--text-muted)" }}>
-                    {item.priority}
-                  </span>
-                  <button
-                    className="ghost-btn"
-                    style={{ border: "1px solid var(--border)", borderRadius: 7, padding: "5px 10px" }}
-                    onClick={() => (script ? setExpandedId(expanded ? null : item.id) : writeScript(item.id, item))}
-                    disabled={scriptingId === item.id}
-                  >
-                    {scriptingId === item.id ? <Loader2 size={12} className="spin" /> : script ? (expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <FileText size={12} />}
-                    {script ? "Script" : "Write script"}
-                  </button>
-                </div>
-                {expanded && script && (
-                  <div style={{ padding: "4px 14px 14px 44px", display: "flex", flexDirection: "column", gap: 8, fontSize: 12, lineHeight: 1.5 }}>
-                    <div><span style={mono}>HOOK</span><div>{script.hook}</div></div>
-                    <div><span style={mono}>INTRO</span><div>{script.intro}</div></div>
-                    {(script.sections || []).map((s, i) => (
-                      <div key={i}><span style={mono}>{s.heading?.toUpperCase()}</span><div>{s.content}</div></div>
-                    ))}
-                    <div><span style={mono}>CTA</span><div>{script.cta}</div></div>
-                  </div>
-                )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))", gap: 10, fontSize: 12 }}>
+              <div>
+                <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>CONTENT GAPS</span>
+                <ul style={{ margin: "4px 0 0 16px", padding: 0, color: "var(--text-muted)" }}>
+                  {(research.gaps || []).map((g, i) => <li key={i} style={{ marginBottom: 2 }}>{g}</li>)}
+                </ul>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div>
+                <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>AUDIENCE NEEDS</span>
+                <div style={{ marginTop: 4, color: "var(--text-muted)" }}>{research.audienceNeeds}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {loading && research && <Spinner label="Building the 5-video roadmap..." />}
+
+        {videoPlan.length > 0 && (
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <ListChecks size={15} color="var(--accent)" />
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 14.5, fontWeight: 600 }}>5-video roadmap</div>
+            </div>
+            {videoPlan.map((item) => {
+              const script = planScripts[item.id];
+              const expanded = expandedId === item.id;
+              return (
+                <div key={item.id} style={{ background: "var(--surface-2)", borderRadius: "var(--radius-md)", marginBottom: 8, overflow: "hidden" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", width: 18 }}>{item.order}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{item.title}</div>
+                      <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{item.angle}</div>
+                    </div>
+                    <span className="pill pill-neutral">{item.priority}</span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "5px 10px" }}
+                      onClick={() => (script ? setExpandedId(expanded ? null : item.id) : writeScript(item.id, item))}
+                      disabled={scriptingId === item.id}
+                    >
+                      {scriptingId === item.id ? <Loader2 size={12} className="spin" /> : script ? (expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />) : <FileText size={12} />}
+                      {script ? "Script" : "Write script"}
+                    </button>
+                  </div>
+                  {expanded && script && (
+                    <div style={{ padding: "4px 14px 14px 44px", display: "flex", flexDirection: "column", gap: 8, fontSize: 12, lineHeight: 1.5 }}>
+                      <div><span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 10.5 }}>HOOK</span><div>{script.hook}</div></div>
+                      <div><span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 10.5 }}>INTRO</span><div>{script.intro}</div></div>
+                      {(script.sections || []).map((s, i) => (
+                        <div key={i}><span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 10.5 }}>{s.heading?.toUpperCase()}</span><div>{s.content}</div></div>
+                      ))}
+                      <div><span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 10.5 }}>CTA</span><div>{script.cta}</div></div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Wavelength — Clean Premium Modern SaaS Design Tokens
+   ========================================================================== */
+
+:root,
+[data-theme="dark"] {
+  /* ---- Dark Mode Base (Obsidian Slate) ---- */
+  --color-background: #090d16;
+  --color-foreground: #f8fafc;
+  --color-muted: #161c2e;
+  --color-muted-foreground: #94a3b8;
+  
+  --color-accent: #6366f1;
+  --color-accent-foreground: #ffffff;
+  --color-secondary: #ec4899;
+  --color-tertiary: #38bdf8;
+  --color-quaternary: #10b981;
+  
+  --color-border: #1e263c;
+  --color-input: #111625;
+  --color-card: #111625;
+  --color-ring: #6366f1;
+
+  /* Legacy re-maps */
+  --bg: #090d16;
+  --text: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  --surface: #111625;
+  --surface-2: #161c2e;
+  --surface-3: #1d253c;
+  --border: #1e263c;
+  --border-light: #2c3652;
+  
+  /* Accents */
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+  --accent-dark: #4f46e5;
+  --accent-foreground: #ffffff;
+  --accent-warm: #ec4899;
+  --accent-mint: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-blue: #38bdf8;
+  --accent-red: #ef4444;
+  
+  --accent-glow: rgba(99, 102, 241, 0.15);
+  --accent-warm-dim: rgba(236, 72, 153, 0.12);
+  --accent-mint-dim: rgba(16, 185, 129, 0.12);
+  --accent-amber-dim: rgba(245, 158, 11, 0.12);
+  --accent-red-dim: rgba(239, 68, 68, 0.12);
+  --accent-blue-dim: rgba(56, 189, 248, 0.12);
+}
+
+[data-theme="light"] {
+  /* ---- Clean Light Mode ---- */
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #4f46e5;
+  --color-accent-foreground: #ffffff;
+  --color-secondary: #db2777;
+  --color-tertiary: #0284c7;
+  --color-quaternary: #059669;
+  --color-border: #e2e8f0;
+  --color-input: #ffffff;
+  --color-card: #ffffff;
+  --color-ring: #4f46e5;
+
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --border: #e2e8f0;
+  --border-light: #cbd5e1;
+  --accent: #4f46e5;
+  --accent-light: #6366f1;
+  --accent-dark: #4338ca;
+  --accent-foreground: #ffffff;
+  --accent-warm: #db2777;
+  --accent-mint: #059669;
+  --accent-amber: #d97706;
+  --accent-blue: #0284c7;
+  --accent-red: #dc2626;
+  --accent-glow: rgba(79, 70, 229, 0.1);
+  --accent-warm-dim: rgba(219, 39, 119, 0.08);
+  --accent-mint-dim: rgba(5, 150, 105, 0.08);
+  --accent-amber-dim: rgba(217, 119, 6, 0.08);
+  --accent-red-dim: rgba(220, 38, 38, 0.08);
+  --accent-blue-dim: rgba(2, 132, 199, 0.08);
+}
+
+:root {
+  /* ---- Typography ---- */
+  --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* ---- Radius ---- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* ---- Border width ---- */
+  --border-width: 1px;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.45);
+
+  /* ---- Transitions ---- */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s ease;
+
+  /* ---- Layout ---- */
+  --sidebar-width: 250px;
+  --sidebar-collapsed: 64px;
+  --topbar-height: 56px;
+}

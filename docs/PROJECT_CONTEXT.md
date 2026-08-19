@@ -54,19 +54,17 @@ This project is best described as a prototype or MVP, not a production-grade Saa
 - Rich single-page dashboard experience
 - Strong visual direction for creator tooling
 - AI orchestration centered on prompt-driven generation
-- Local persistence that supports iteration without a database
-- Rapid prototyping-friendly setup
+- Server-side persistence (SQLite) that survives restarts and is scoped per user
+- Auth and session management (scrypt + JWT)
+- Rapid prototyping-friendly setup with concurrent dev servers
 
 ### Current limitations
 
-- No user authentication or authorization
-- No persistent server-side database
-- No multi-user support
-- No production deployment setup
-- No automated testing coverage
 - No real analytics integrations
-- No robust rate limiting or billing controls
+- No robust billing controls
 - No formal monitoring or alerting system
+- Not yet production-network-hardened (run behind nginx + HTTPS via Docker for real deployments)
+- Test coverage is lightweight (focused on auth hashing, JWT, and JSON parsing)
 
 ## Architecture Summary
 
@@ -98,9 +96,9 @@ The system assumes the following:
 
 ## Data Model (current implementation)
 
-The current system stores mostly lightweight data in the browser via `localStorage`.
+The system persists per-user dashboard state **server-side in SQLite** (`node:sqlite`). The frontend keeps state in memory during a session and debounces a `PUT /api/state` to persist it; on boot it loads state with `GET /api/state` after authenticating via `GET /api/auth/me`. The DB holds two tables: `users` (id, email, name, password_hash) and `kv` (user_id, key, value text, updated_at).
 
-Examples of persisted data:
+Examples of persisted data (stored as one `app` JSON blob per user):
 
 - trends
 - ideas
@@ -114,7 +112,7 @@ Examples of persisted data:
 - roadmap data
 - plan scripts
 
-This persistence layer is intentionally simple and local-first. It is not enterprise-grade persistence.
+This persistence layer is intentionally simple and local-first (file-based SQLite, no external service). It is not enterprise-grade persistence.
 
 ## Current Functional Modules
 
@@ -169,7 +167,7 @@ The core business logic is prompt-driven. The app does not use a strict domain m
 
 - prompt design
 - response extraction from AI output
-- browser state hydration
+- server-side state hydration
 - serializable JSON objects
 - per-panel user interactions
 
@@ -185,9 +183,8 @@ This is intentionally lightweight and fast to build, but not robust for complex 
 
 ### Operational constraints
 
-- no production-grade persistence layer
-- no queueing system for heavy tasks
-- no async job worker model
+- persistence is file-based SQLite (single `data/wavelength.db`), not a managed database
+- no queueing system for heavy AI tasks (generation is synchronous per request)
 - app is best-effort and synchronous for user requests
 
 ### Product constraints
@@ -200,10 +197,10 @@ This is intentionally lightweight and fast to build, but not robust for complex 
 AI agents working on this project should:
 
 - prefer preserving the current architecture over rearchitecting it
-- not introduce persistent user state without a clear storage model
+- not introduce persistent user state without a clear (SQLite) storage model
 - treat the AI service layer as a controlled integration boundary
 - avoid shipping breaking changes to the JSON payload contracts without updating all consumers
-- keep localStorage serialization compatible with older app state
+- keep server-side state serialization compatible with older app state shapes
 - preserve user experience patterns that are already established in the dashboard
 
 ## Do's and Don'ts
@@ -212,7 +209,7 @@ AI agents working on this project should:
 
 - reuse existing component patterns
 - keep API routes explicit and intentional
-- maintain the browser/localStorage flow when possible
+- maintain the server-side state sync flow when possible
 - update docs when changing prompt contracts or state shapes
 - keep key management server-side
 
@@ -228,7 +225,7 @@ AI agents working on this project should:
 
 This document intentionally marks places where the project does not yet implement enterprise features. Assumptions include:
 
-- user identity is not yet implemented
+- user identity is implemented (scrypt + JWT sessions; per-user state in SQLite)
 - content generation is prototype-level, not production-validated
 - AI tools are used for research and ideation, not fully deterministic content automation
 - there is no formal data retention policy yet
@@ -245,12 +242,11 @@ This document intentionally marks places where the project does not yet implemen
 
 ## Future Outlook
 
-This is a well-scoped creator tooling MVP. The most valuable next step is to evolve from browser-local experimentation into a real platform that includes:
+This is a well-scoped creator tooling MVP. The most valuable next step is to evolve from local experimentation into a real platform that includes:
 
-- user auth
-- persistent API data and analytics
+- a managed database and per-user isolation
 - managed AI jobs
-- deployment infrastructure
+- deployment infrastructure (Docker + nginx + HTTPS)
 - metrics and observability
 
 ---

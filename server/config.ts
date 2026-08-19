@@ -1,4 +1,5 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ override: true });
 
 function list(value: string | undefined, fallback: string[]): string[] {
   return (value || "")
@@ -17,6 +18,8 @@ export const config = {
   port: Number(process.env.PORT || 4180),
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   openaiModel: process.env.OPENAI_MODEL || "gpt-4o-mini",
+  geminiApiKey: process.env.GEMINI_API_KEY || "",
+  geminiModel: process.env.GEMINI_MODEL || "gemini-3.6-flash",
   jwtSecret: process.env.JWT_SECRET || "dev-only-secret-change-me",
   jwtExpiresIn: "7d",
   corsOrigins: list(process.env.CORS_ORIGIN, [

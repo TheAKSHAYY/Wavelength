@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
@@ -18,7 +19,7 @@ export default defineConfig({
     proxy: {
       // Forward API calls to the local Express backend, which holds the OpenAI key.
       "/api": {
-        target: `http://localhost:${backendPort}`,
+        target: `http://127.0.0.1:${backendPort}`,
         changeOrigin: true,
       },
     },

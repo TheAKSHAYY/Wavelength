@@ -2,7 +2,19 @@
 
 ## Current State
 
-This project does not yet have a formal automated test suite. It is currently best viewed as a local prototype with manual verification and build checks.
+The project has a lightweight **Vitest** unit-test suite covering the backend auth logic and the shared client-side parsing/formatting helpers. Run it with `npm test`. The suite is intentionally small; it focuses on the highest-risk pure-logic boundaries (password hashing, JWT round-trip, JSON extraction).
+
+```bash
+npm test          # vitest run
+npm run typecheck  # tsc --noEmit across client + server
+npm run lint       # eslint .
+```
+
+### What is covered today
+
+- `server/__tests__/auth.test.ts` — scrypt password hashing/verification and JWT sign/verify round-trips.
+- `src/lib/__tests__/parse.test.ts` — JSON extraction from fenced and free-form model output.
+- `src/lib/__tests__/format.test.ts` — `greeting`, `initials`, `relativeTime` helpers.
 
 ## Testing Principles
 

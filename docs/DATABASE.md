@@ -1,120 +1,86 @@
-# Database and Persistence Plan
+# Database and Persistence
 
 ## Current State
 
-This project does not currently use a traditional relational or document database. Instead, it stores generated content in the browser using the Web Storage API (`localStorage`).
+Wavelength persists data **server-side in SQLite** using Node's built-in `node:sqlite` module (no native dependencies). Per-user dashboard state is stored per account and synced on a debounce from the browser.
 
-## Why No Database Exists Yet
+## Storage Model
 
-The project is currently structured as a local, prototype-grade dashboard. The focus has been on rapid UI development and AI-assisted workflows rather than a full persistent backend data layer.
+The application uses a single on-disk SQLite database (path from `DB_PATH`, default `./data/wavelength.db`). It holds two tables:
 
-## Current Persistence Model
+- `users` — account credentials (email + scrypt-hashed password)
+- `kv` — an arbitrary per-user JSON blob keyed by `user_id` + `key`
 
-### Browser persistence
+`data/` is created automatically at startup if it does not exist (`mkdirSync(..., { recursive: true })`).
 
-The application saves dashboard artifacts in local storage, such as:
+## Schema
 
-- trends
-- recommendations
-- generated ideas
-- scripts
-- research summaries
-- roadmap plan entries
-- calendar-related state
+### `users`
 
-This provides a lightweight persistence mechanism without requiring a backend database.
+| Column          | Type    | Notes                                   |
+| --------------- | ------- | --------------------------------------- |
+| `id`            | TEXT PK | `randomUUID()` from `node:crypto`       |
+| `email`         | TEXT    | UNIQUE, NOT NULL; normalized to lowercase |
+| `name`          | TEXT    | NOT NULL                                |
+| `password_hash` | TEXT    | `salt:scryptHash` (scrypt, 16-byte salt) |
+| `created_at`    | TEXT    | `datetime('now')`                       |
 
-## Risks of the Current Model
+### `kv`
 
-- data is local to a single browser/device
-- no user account or shared workspace model
-- no versioning or rollback history
-- no encryption or additional security controls
-- no backup or restore strategy
-- no audit trails or data retention policy
+| Column       | Type    | Notes                              |
+| ------------ | ------- | ---------------------------------- |
+| `user_id`    | TEXT FK | → `users.id`, ON DELETE CASCADE    |
+| `key`        | TEXT    | e.g. `app`                         |
+| `value`      | TEXT    | JSON blob of the user's app state  |
+| `updated_at` | TEXT    | `datetime('now')` on each write    |
 
-## Recommended Future Database Architecture
+Composite primary key: `(user_id, key)`.
 
-### Option A: PostgreSQL + application data model
+## What Gets Stored
 
-Recommended if the product grows into a real SaaS or creator platform.
+A single `app` state blob per user contains the entire dashboard state:
 
-Use PostgreSQL for:
+- `niche` — configured content niche
+- `trends`, `competitors`, `keywords`, `ideas`, `titles` — generated lists
+- `script`, `pkg`, `research` — generated single objects
+- `videoPlan`, `planScripts` — roadmap + per-video scripts
+- `calendar` — scheduled entries
+- `alerts`, `recommendations` — dashboard insights
 
-- users and subscriptions
-- workflows and projects
-- generated content objects
-- publishing plans and media assets
-- analytics events and audit logs
+## Persistence Behavior
 
-### Option B: Firebase or Supabase
+- The React `StoreProvider` keeps state in memory during a session.
+- On a debounced 400ms timer (and on logout), state is flushed with `PUT /api/state`.
+- On boot, the store loads state with `GET /api/state` after confirming the session via `GET /api/auth/me`.
 
-Suitable for a faster MVP with auth, realtime features, and simpler data modeling.
+## Why SQLite
 
-Benefits:
+- ships with Node 22+ (`node:sqlite`) — zero native dependencies
+- file-based, no external service required for local dev
+- fast enough for a single-user local dashboard
+- persists across server restarts, unlike browser-only storage
 
-- easier auth setup
-- managed database and realtime APIs
-- faster time-to-market for a modern SaaS
+## Risks / Limitations
 
-## Data Model Ideas for the Future
+- single-file database — concurrent multi-process writes need WAL + care
+- no encryption at rest
+- no automated backups
+- no schema migration framework (schema is created with `CREATE TABLE IF NOT EXISTS`)
 
-### User
+## Future Database Direction
 
-- id
-- email
-- name
-- created_at
-- subscription_tier
+- migrate to PostgreSQL (or a managed equivalent) for multi-user / hosted deployments
+- add a migrations tool (e.g. `drizzle-kit`, `kysely`)
+- add audit/logging tables for AI usage and user actions
+- index `kv` on `key` if more keys are introduced
 
-### Project
+## Accessing the Database
 
-- id
-- user_id
-- title
-- niche
-- status
-- created_at
-
-### ContentIdea
-
-- id
-- project_id
-- title
-- description
-- source_summary
-- created_at
-
-### ContentPlan
-
-- id
-- project_id
-- video_number
-- title
-- objective
-- published_at
-
-### ScriptDraft
-
-- id
-- project_id
-- title
-- body
-- outline
-- status
-
-## Recommended Production Practices
-
-- use environment-based configuration
-- encrypt sensitive fields where needed
-- add database migrations
-- use backup and restore procedures
-- log access and creation events
-- maintain schema versioning
-
-## Conclusion
-
-The current app is intentionally simple and local-first. The architecture is appropriate for an MVP, but a real product will need persistent server-side storage and stronger data governance.
+```bash
+# inspect with the sqlite3 CLI if installed
+sqlite3 data/wavelength.db ".tables"
+sqlite3 data/wavelength.db "SELECT id, email, name FROM users;"
+```
 
 ---
 

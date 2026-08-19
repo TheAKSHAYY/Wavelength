@@ -2,130 +2,127 @@
 
 ## Summary
 
-The project uses a light-weight application stack intentionally optimized for a fast, local-first creator dashboard. It combines React on the frontend, Express on the backend, and OpenAI as the AI inference layer.
+Wavelength is a TypeScript full-stack app optimized for a fast, local-first creator dashboard: a React + Vite frontend, an Express + TypeScript backend that proxies to OpenAI, and SQLite for per-user persistence. Secrets are kept entirely server-side.
 
 ## Frontend
 
-### React 18
+### React 18 + TypeScript
 
-React is used as the UI framework for building the dashboard’s interactive panels and stateful components.
+React powers the dashboard's interactive panels, routing, and stateful components. TypeScript provides compile-time safety across the React + Vite toolchain.
 
 Benefits:
 
 - rapid interface iteration
 - component-based composition
-- straightforward local state handling
-- strong fit for a dashboard MVP
+- React Context for shared auth/state
+- strong typing for zod-validated AI output
 
 Trade-offs:
 
-- no server-side rendering
-- browser-only state needs explicit persistence design
+- no server-side rendering (dev-only local build)
 
-### Vite
+### Vite + Vite Plugin React
 
-Vite is used for local development and build optimization.
+Vite provides fast HMR and the production build. `vite.config.ts` imports `dotenv/config` so the `/api` proxy target reads `PORT` from `.env`, keeping client and server ports in sync.
 
-Benefits:
+### React Router DOM (v7)
 
-- fast HMR and dev feedback
-- simple static build pipeline
-- good performance for front-end prototypes
+Client-side routing between the dashboard pages and auth screen.
 
 ### Recharts
 
-Recharts provides charting for analytic and trend-driven visuals.
-
-Benefits:
-
-- simple charts and trend lines
-- quick visual communication of metrics
-- good fit for dashboard data summaries
+Recharts renders the analytics charts (area + bar charts) on the Analytics page.
 
 ### Lucide React
 
-This is used for accessible icons in the dashboard.
+Accessible icon set used throughout the dashboard.
 
-Benefits:
+### CSS (design tokens)
 
-- consistent visual language
-- lightweight icon set
-- minimal integration overhead
+A single `src/styles/app.css` defines the entire visual system via CSS custom properties (colors, radii, shadows, transitions) and responsive layout — no CSS-in-JS.
 
 ## Backend
 
+### Node.js + TypeScript
+
+The backend is TypeScript run with `tsx` (no separate compile step in dev). Node 22+ provides `node:sqlite` and native `fetch` out of the box.
+
 ### Express
 
-Express provides the API layer and proxy for the AI backend.
+Express exposes the API routes and proxies to OpenAI.
 
 Responsibilities:
 
-- expose a local API route for the frontend
+- expose `/api/*` routes for the frontend
 - read environment configuration
 - validate request inputs
-- forward requests to OpenAI securely
-- return parsed results to the client
+- forward requests to OpenAI securely (key never leaves the server)
+- return normalized text output
+
+### node:sqlite
+
+Zero-dependency SQLite via Node's built-in module — users + per-user state, no native build step.
+
+### jsonwebtoken + node:crypto (scrypt)
+
+JWT signed with `JWT_SECRET`, stored in an httpOnly cookie. Passwords hashed with `scryptSync`.
+
+### express-rate-limit
+
+Two rate limiters: an auth limiter (20 req/min) and an AI limiter (60 req/min).
+
+### zod
+
+Schemas for every AI panel validate the model output on the client; the backend returns raw text and lets the client validate.
 
 ## AI Layer
 
 ### OpenAI Responses API
 
-The backend calls OpenAI via the Responses API.
+The backend calls `https://api.openai.com/v1/responses`. Web-search-enabled panels attach a `web_search_preview` tool.
 
 Why this fits:
 
-- model flexibility
-- powerful prompt-driven generation
-- good compatibility with structured output patterns
-- simple integration for a local prototype
+- model flexibility (`OPENAI_MODEL`, default `gpt-4o-mini`)
+- prompt-driven generation
+- web search for research-heavy panels
 
 ## Data and State
 
-### localStorage
+### SQLite (server-side)
 
-The frontend persists generated state in the browser using localStorage.
-
-Why it is used:
-
-- developer speed
-- no database required during prototype phase
-- easy persistence across refreshes
-
-Limitations:
-
-- not secure for sensitive data
-- not multi-user
-- not scalable for production workloads
+Per-user dashboard state is persisted in SQLite (`users` + `kv` tables). The frontend debounces a `PUT /api/state` to keep the server blob in sync, and loads it on login/boot. See [DATABASE.md](./DATABASE.md).
 
 ## Networking and Security
 
 ### CORS
 
-CORS is configured to allow the frontend to access the backend during development.
+CORS is restricted to `CORS_ORIGIN` (frontend origin) with credentials enabled.
 
 ### Proxy configuration
 
-Vite proxies all `/api` requests to the backend on `localhost:3001`.
+The Vite dev server proxies `/api` to `http://localhost:<PORT>`. In production, `nginx.conf` serves the static `dist/` and proxies `/api` to the server container (`docker-compose.yml`).
 
-This design keeps the browser from speaking directly to OpenAI and centralizes secret management.
+This design keeps the browser from speaking to OpenAI directly and centralizes secret management.
 
 ## Build and Runtime Tools
 
-### Node.js
-
-The project runs in a Node.js environment with npm as its package manager.
-
-### Concurrently
-
-The project uses `concurrently` in the dev script so both backend and frontend can start together.
+- **Node.js** (22.5+ for `node:sqlite`) with npm
+- **tsx** — TypeScript execution for the backend (no compile in dev)
+- **concurrently** — runs backend + frontend together under `npm run dev`
+- **ESLint + Prettier** — linting and formatting
+- **Vitest** — unit tests for the server (`/auth`) and shared client utils (`/parse`, /`format`)
 
 ## Dependency Profile
 
-| Category | Dependencies |
-|---|---|
-| Runtime | react, react-dom, express, cors, dotenv, node-fetch |
-| UI | lucide-react, recharts |
-| Dev | vite, @vitejs/plugin-react, concurrently |
+| Layer        | Dependencies                                          |
+| ------------ | ----------------------------------------------------- |
+| Runtime (FE) | react, react-dom, react-router-dom, recharts, zod     |
+| Runtime (BE) | express, cors, cookie-parser, jsonwebtoken, express-rate-limit, dotenv, node:sqlite |
+| UI           | lucide-react                                           |
+| Dev          | vite, @vitejs/plugin-react, typescript, tsx, concurrently, eslint, prettier, vitest |
+
+Note: the backend uses Node's built-in `fetch` and `node:sqlite` — no `node-fetch` dependency.
 
 ## Architectural Trade-offs
 
@@ -133,25 +130,22 @@ The project uses `concurrently` in the dev script so both backend and frontend c
 
 - simple and easy to understand
 - fast iteration cycle
-- secret-safe architecture
-- small dependency footprint
+- secrets never reach the browser
+- small dependency footprint (no native modules)
 
 ### Weaknesses
 
-- no database or session layer
-- no production networking hardening
-- no user-centric security model
-- AI orchestration is prompt-based and not deeply structured
+- single-file SQLite DB under concurrent multi-process load
+- not production-network-hardened (use Docker/nginx for that)
+- AI orchestration is prompt-driven, so output quality depends on prompts + validation
 
 ## Recommendation
 
-This is a strong MVP stack. For the next production phase, the project should likely evolve into:
+This is a strong local-dev stack. For production, the project should:
 
-- a real database layer
-- auth and user workspaces
-- a queueing and job system for AI workloads
-- better telemetry and monitoring
-- deployment automation
+- run behind nginx + HTTPS (Docker compose provided)
+- set a strong `JWT_SECRET` and rotate `OPENAI_API_KEY`
+- use a managed database if multi-process concurrency is needed
 
 ---
 

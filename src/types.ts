@@ -65,9 +65,22 @@ export interface Alert {
 
 export interface Title {
   id: string;
+  rank?: number;
   title: string;
-  style: string;
-  ctr: number;
+  angle?: string;
+  style?: string;
+  ctrPotential?: "Very High" | "High" | "Medium" | "Low";
+  ctr?: number;
+  score?: number;
+  whyItWorks?: string;
+}
+
+export interface TitleResearchMetadata {
+  topic: string;
+  audience: string;
+  researchStatus: "Research-backed" | "AI-generated from topic knowledge" | "Limited research available";
+  opportunity: string;
+  observedAngles: string[];
 }
 
 export interface Keyword {
@@ -80,15 +93,31 @@ export interface Keyword {
 
 export interface ScriptSection {
   heading: string;
+  purpose?: string;
+  keyPoints?: string[];
+  retentionOpportunity?: string;
   content: string;
 }
 
 export interface Script {
+  mode?: "outline" | "full";
+  title?: string;
+  topic?: string;
+  audience?: string;
+  language?: "English" | "Hindi" | "Hinglish";
+  duration?: string;
+  format?: string;
   hook: string;
   intro: string;
   sections: ScriptSection[];
   cta: string;
   chapters?: string[];
+  qualityScore?: {
+    relevance: number;
+    retention: number;
+    naturalness: number;
+    overall: number;
+  };
 }
 
 export interface ContentPackage {
@@ -127,10 +156,31 @@ export interface VideoPlanItem {
   priority: Priority;
 }
 
+export interface SocialLinks {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  website?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  channel_name?: string;
+  handle?: string;
+  bio?: string;
+  avatar_url?: string;
+  avatar_color?: string;
+  niche?: string;
+  target_audience?: string;
+  tone?: string;
+  youtube_channel_id?: string;
+  upload_goal?: string;
+  social_links?: SocialLinks;
+  created_at?: string;
 }
 
 export interface AppState {

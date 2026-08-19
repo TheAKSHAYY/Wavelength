@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { api } from "./client";
+import { api, ApiError } from "./client";
 import { extractJSON } from "./parse";
 
 interface GenerateOptions {
@@ -28,12 +28,23 @@ export async function generateJSON<T>(
   schema: z.ZodType<T>,
   options: GenerateOptions
 ): Promise<T> {
-  const res = await api.post<{ text: string }>("/api/generate", {
-    system: options.system,
-    prompt: options.prompt,
-    useWebSearch: Boolean(options.useWebSearch),
-  });
-  return parseModelJSON(schema, res.text);
+  try {
+    const res = await api.post<{ text: string }>("/api/generate", {
+      system: options.system,
+      prompt: options.prompt,
+      useWebSearch: Boolean(options.useWebSearch),
+    });
+    return parseModelJSON(schema, res.text);
+  } catch (err) {
+    if (err instanceof ApiError && err.status >= 500) {
+      const res = await api.post<{ text: string }>("/api/gemini/generate", {
+        system: options.system,
+        prompt: options.prompt,
+      });
+      return parseModelJSON(schema, res.text);
+    }
+    throw err;
+  }
 }
 
 export function uid(): string {

@@ -42,6 +42,8 @@ interface Store {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<User>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const StoreCtx = createContext<Store | null>(null);
@@ -133,6 +135,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [loadUserState]
   );
 
+  const updateProfile = useCallback(
+    async (data: Partial<User>) => {
+      const res = await api.put<{ user: User }>("/api/auth/profile", data);
+      setUser(res.user);
+      if (data.niche) {
+        setState((prev) => ({ ...prev, niche: data.niche! }));
+      }
+      return res.user;
+    },
+    [setState]
+  );
+
+  const updatePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      await api.put<{ ok: boolean; message: string }>("/api/auth/password", {
+        currentPassword,
+        newPassword,
+      });
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     try {
       await api.put("/api/state", { state: stateRef.current });
@@ -150,8 +174,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Store>(
-    () => ({ user, booting, ready, state, setState, login, register, logout }),
-    [user, booting, ready, state, setState, login, register, logout]
+    () => ({
+      user,
+      booting,
+      ready,
+      state,
+      setState,
+      login,
+      register,
+      logout,
+      updateProfile,
+      updatePassword,
+    }),
+    [user, booting, ready, state, setState, login, register, logout, updateProfile, updatePassword]
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

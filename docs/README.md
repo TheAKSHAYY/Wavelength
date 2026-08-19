@@ -4,13 +4,13 @@
 
 This document is the entry point for the Wavelength project. It explains the product vision, architecture, setup, and operational expectations for engineers, AI coding assistants, and future maintainers.
 
-This project is a local-first AI-powered YouTube growth dashboard for content creators. It combines trend discovery, market research, keyword analysis, content idea generation, editing support, and publishing planning in a single interface.
+Wavelength is a local-first, AI-powered YouTube growth dashboard for content creators. It combines trend discovery, competitor research, keyword analysis, content idea/title/script generation, a field-research → 5-video roadmap tool, and a one-click "full content package" generator. Powered by OpenAI (with live web search for research-heavy panels).
 
 ## Overview
 
-Wavelength is a Vite + React frontend backed by an Express API proxy that forwards requests to OpenAI. The app is designed to keep secrets on the backend and avoid exposing API credentials in the browser.
+Wavelength is a Vite + React (TypeScript) frontend backed by an Express (TypeScript) API proxy that forwards requests to OpenAI. The app keeps secrets on the backend and never exposes the API key in the browser.
 
-The product follows a “research assistant for creator strategy” model:
+The product follows a "research assistant for creator strategy" model:
 
 - discover what is trending in a niche
 - track competitor activity
@@ -19,6 +19,20 @@ The product follows a “research assistant for creator strategy” model:
 - draft scripts and outlines
 - assemble a five-video strategy roadmap
 - maintain a lightweight publishing calendar
+- get AI-driven recommendations
+
+## Quick start
+
+```bash
+npm install
+cp .env.example .env   # then set OPENAI_API_KEY and JWT_SECRET
+npm run dev            # backend :3001 + frontend :5173
+npm run seed:dev       # create a ready-to-sign-in dev account
+```
+
+Open **http://localhost:5173**. Sign in with the seeded dev account or register a new one from the login screen.
+
+See [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) for every `.env` option.
 
 ## Features
 
@@ -34,7 +48,7 @@ The product follows a “research assistant for creator strategy” model:
 - One-click content package generation
 - Content calendar planning
 - Alert and recommendation panels
-- Browser-side persistence via localStorage
+- **Server-side persistence**: per-user state is saved in SQLite (not localStorage), so it survives restarts and is scoped per account
 
 ### Target user
 
@@ -43,9 +57,9 @@ The product follows a “research assistant for creator strategy” model:
 - Channel operators focused on content planning and growth
 - Students and emerging developers building content systems
 
-## Screenshots placeholders
+## Screenshots
 
-The project currently has no production screenshots checked in. Recommended placeholders for future documentation:
+The project currently has no production screenshots checked in. Suggested placeholders for future documentation:
 
 - Dashboard overview
 - Trend discovery panel
@@ -64,10 +78,10 @@ Suggested naming convention:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.5+ (for the built-in `node:sqlite` module used by the backend)
 - npm
-- OpenAI API key
-- Local environment that can run Vite and Express together
+- An OpenAI API key (pay-as-you-go billing at platform.openai.com — **not** a ChatGPT Plus subscription)
+- A local environment that can run Vite and Express together
 
 ### Install dependencies
 
@@ -83,7 +97,18 @@ Create a local `.env` file using the project example:
 cp .env.example .env
 ```
 
-Required variables are described in [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md).
+Then open `.env` and set at least:
+
+```
+OPENAI_API_KEY=sk-...
+JWT_SECRET=<long random string>
+```
+
+Generate a `JWT_SECRET` with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
 
 ## Local Development
 
@@ -95,78 +120,120 @@ npm run dev
 
 This launches:
 
-- Express backend on port 3001
-- Vite frontend on port 5173
+- Express backend on port `3001` (or `PORT` from `.env`)
+- Vite frontend on port `5173`
+
+Open **http://localhost:5173**, sign in (or run `npm run seed:dev` for a ready dev account), and you are in.
 
 ### Useful commands
 
 ```bash
-npm run server
-npm run client
-npm run build
-npm run preview
+npm run dev          # backend + frontend together
+npm run dev:server   # backend only (tsx watch)
+npm run dev:client   # frontend only (Vite)
+npm run seed:dev     # seed a dev account (admin@wavelength.local / password123)
+npm run build        # compile the server and build the client
+npm run server       # runs the compiled server from server/dist
+npm run preview      # serves the production client build locally
+npm run typecheck    # type-checks client + server
+npm run lint         # ESLint
+npm run format       # Prettier
+npm test             # Vitest unit tests
 ```
 
-## Deployment
+## Cost / Model Notes
 
-The project is currently designed for local development, not production deployment. It can be deployed to a Node-capable environment with a secure API proxy layer, environment variables configured, and a production build generated via Vite.
+- Default model is `gpt-4o-mini` — cheap and fast, good enough for most panels.
+- Web-search panels (Trend Discovery, Competitor Intel, Keyword Research, Field Research, One-Click Package) use OpenAI's `web_search_preview` tool, which costs a little extra per call.
+- Want higher-quality output? Set `OPENAI_MODEL=gpt-4o` in `.env`.
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for more details.
+## Real YouTube Analytics
+
+The Analytics page shows sample data until you configure the YouTube Data API in `.env`:
+
+- Create a public-data API key at https://console.cloud.google.com/apis/credentials
+- Enable the "YouTube Data API v3"
+- Set `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` in `.env`
+
+It then charts the all-time views of your most recent uploads. 7-day deltas require OAuth via the YouTube Analytics API, which is out of scope.
+
+## Deploying
+
+### Docker (recommended)
+
+```bash
+cp .env.example .env   # fill in real values first
+docker compose up -d --build
+```
+
+Open **http://localhost:8080**. The web service serves the client and proxies `/api` to the server service; SQLite data persists in a Docker volume.
+
+### Manual
+
+1. Build: `npm run build`
+2. Run the server: `npm run server` (with the same env vars set)
+3. Serve the `dist/` folder from any static host, pointing `/api` at the server (or put it behind the same nginx/domain and proxy `/api`).
 
 ## Folder Structure
 
 ```text
 wavelength/
-├── docs/
-├── server/
-│   └── index.js
-├── src/
-│   ├── components/
-│   ├── data/
-│   ├── services/
-│   ├── styles/
-│   ├── utils/
-│   ├── main.jsx
-│   └── WavelengthDashboard.jsx
-├── .env.example
-├── index.html
-├── package.json
-├── vite.config.js
-├── README.md
-└── .gitignore
+├── docs/            project documentation
+├── server/          Express + TypeScript backend
+│   ├── index.ts     app setup, CORS, routes
+│   ├── config.ts    env/config
+│   ├── db.ts        SQLite (node:sqlite) users + per-user state
+│   ├── auth.ts      scrypt hashing + JWT
+│   ├── middleware.ts  requireAuth, rate limits
+│   ├── seed.ts      dev account seeder
+│   └── routes/      auth, state, generate (AI proxy), youtube
+├── src/             React + TypeScript frontend
+│   ├── components/  Sidebar, TopNav, Chat, Landing, Upload, SharedUI
+│   ├── lib/         store, ai, client, schemas, parse, hooks
+│   ├── pages/       one page per sidebar route
+│   ├── styles/      app.css (design tokens)
+│   └── main.tsx     entry point
+├── data/            SQLite database file (wavelength.db)
+├── dist/            production client build
+└── ...
 ```
 
-See [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) for a full breakdown.
+See [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md) for a full breakdown.
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Frontend | React 18, Vite |
-| Backend | Express |
-| AI API | OpenAI Responses API |
-| Styling | CSS modules / custom CSS |
-| Data persistence | browser localStorage |
-| Build tooling | Vite |
+| --- | --- |
+| Frontend | React 18, Vite 6, TypeScript |
+| Routing | React Router DOM v7 |
+| Backend | Node.js + Express, TypeScript (tsx) |
+| Auth | scrypt (node:crypto) + JWT (jsonwebtoken), httpOnly cookies |
+| Storage | SQLite (node:sqlite), per-user `kv` blob |
+| AI | OpenAI Responses API (web_search_preview for research) |
+| Validation | zod (client-side schemas) |
+| Rate limiting | express-rate-limit |
 | Charts | Recharts |
 | Icons | lucide-react |
+| Styling | CSS custom properties / design tokens |
+| Build | Vite + TypeScript |
+| Tests | Vitest (unit: auth hashing, JSON parsing) |
 
-See [TECH_STACK.md](TECH_STACK.md) for rationale and trade-offs.
+See [TECH_STACK.md](./TECH_STACK.md) for rationale and trade-offs.
 
 ## Architecture
 
 The architecture is intentionally simple:
 
 - React UI renders the dashboard and calls REST endpoints through the same-origin Vite proxy
-- Express backend stores no secrets in the client
+- Express backend stores the OpenAI key (never sent to the browser)
 - OpenAI calls happen only on the server
-- localStorage stores generated data locally in the browser for lightweight persistence
+- per-user state is persisted server-side in SQLite
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full runtime and component flows.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) and [API.md](./API.md).
 
 ## Contributing
 
-Contributions are welcome. Please follow the repository conventions described in [CONTRIBUTING.md](CONTRIBUTING.md) and [CODING_STANDARDS.md](CODING_STANDARDS.md).
+Contributions are welcome. Please follow the repository conventions described in [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODING_STANDARDS.md](./CODING_STANDARDS.md).
 
 Before making changes:
 
@@ -177,34 +244,33 @@ Before making changes:
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md).
+This project is licensed under the MIT License. See [LICENSE.md](./LICENSE.md).
 
 ## Cross references
 
-- [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) — product and engineering context
-- [PRD.md](PRD.md) — requirements
-- [FEATURES.md](FEATURES.md) — feature details
-- [ARCHITECTURE.md](ARCHITECTURE.md) — system design
-- [API.md](API.md) — endpoints and contracts
-- [SECURITY.md](SECURITY.md) — attack surface and controls
-- [TESTING.md](TESTING.md) — validation strategy
-- [ROADMAP.md](ROADMAP.md) — future milestones
+- [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) — product and engineering context
+- [PRD.md](./PRD.md) — requirements
+- [FEATURES.md](./FEATURES.md) — feature details
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design
+- [API.md](./API.md) — endpoints and contracts
+- [DATABASE.md](./DATABASE.md) — persistence model and schema
+- [SECURITY.md](./SECURITY.md) — attack surface and controls
+- [TESTING.md](./TESTING.md) — validation strategy
+- [ROADMAP.md](./ROADMAP.md) — future milestones
 
 ## Future Improvements
 
 The project has a strong MVP foundation. Recommended next improvements include:
 
-- real database persistence
-- auth and user accounts
-- YouTube API integration
-- audience analytics and search trend imports
+- multi-process-safe database (or a managed store)
+- OAuth via the YouTube Analytics API for 7-day delta analytics
 - content workflow integrations
 - deployment hardening and CI/CD
-- automated tests for API and UI flows
+- automated tests for API and full UI auth flows
 
 ## Notes
 
-This documentation has been inferred from the current codebase and project behavior. Assumptions are explicitly noted where the project does not yet have full implementation details.
+This documentation has been updated to match the current codebase (TypeScript frontend + TypeScript Express backend, SQLite per-user state, JWT auth).
 
 ---
 

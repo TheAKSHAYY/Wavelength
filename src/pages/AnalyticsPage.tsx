@@ -17,7 +17,7 @@ const SAMPLE = [
   { day: "Sun", views: 9600 },
 ];
 
-const tooltipStyle = { background: "#171C24", border: "1px solid #232A34", borderRadius: 8, fontSize: 12 };
+const tooltipStyle = { background: "#1a1f2b", border: "1px solid #2a3040", borderRadius: 8, fontSize: 12 };
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<VideoStat[] | null>(null);
@@ -43,61 +43,68 @@ export default function AnalyticsPage() {
   const real = configured && Array.isArray(stats) && stats.length > 0;
 
   return (
-    <div className="card" style={{ padding: 22, marginBottom: 22 }}>
-      <PanelCard title="Channel performance" eyebrow={real ? "YouTube Data API (live)" : "Sample data"}>
-        {error && <ErrorBanner message={error} />}
-        {!real && (
-          <div className="muted" style={{ fontSize: 11.5, marginBottom: 10 }}>
-            Connect your channel to replace this with real numbers: add a public-data
-            <span style={{ fontFamily: "var(--font-mono)" }}> YOUTUBE_API_KEY </span>
-            and <span style={{ fontFamily: "var(--font-mono)" }}>YOUTUBE_CHANNEL_ID</span> to your .env.
-          </div>
-        )}
+    <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: 0 }}>Analytics</h1>
+        <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 14 }}>Channel performance and video statistics</p>
+      </div>
 
-        {loading && <Spinner label="Loading analytics..." />}
-
-        {real && (
-          <>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stats!} margin={{ top: 4, right: 0, left: 0, bottom: 24 }}>
-                <CartesianGrid stroke="#232A34" vertical={false} />
-                <XAxis dataKey="title" stroke="#8A94A3" fontSize={9} tickLine={false} axisLine={false} interval={0} tickFormatter={(v: string) => (v.length > 22 ? v.slice(0, 21) + "…" : v)} angle={-28} textAnchor="end" height={70} />
-                <YAxis stroke="#8A94A3" fontSize={11} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => (v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${Math.round(v / 1e3)}K` : String(v))} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="views" fill="#FFB020" radius={[4, 4, 0, 0]}>
-                  {stats!.map((_, i) => (
-                    <Cell key={i} fill={i === 0 ? "#FFB020" : "#7a5a17"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              All-time views for your most recent uploads. 7-day deltas need OAuth via the YouTube Analytics API.
+      <div className="card" style={{ padding: "clamp(16px, 3vw, 24px)" }}>
+        <PanelCard title="Channel performance" eyebrow={real ? "YouTube Data API (live)" : "Sample data"}>
+          {error && <ErrorBanner message={error} />}
+          {!real && (
+            <div className="muted" style={{ fontSize: 11.5, marginBottom: 10 }}>
+              Connect your channel to replace this with real numbers: add a public-data
+              <span style={{ fontFamily: "var(--font-mono)" }}> YOUTUBE_API_KEY </span>
+              and <span style={{ fontFamily: "var(--font-mono)" }}>YOUTUBE_CHANNEL_ID</span> to your .env.
             </div>
-          </>
-        )}
+          )}
 
-        {!real && !loading && (
-          <>
-            <div className="muted" style={{ fontSize: 11.5, marginBottom: 10 }}>Views, last 7 days (placeholder).</div>
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={SAMPLE}>
-                <defs>
-                  <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FFB020" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#FFB020" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#232A34" vertical={false} />
-                <XAxis dataKey="day" stroke="#8A94A3" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8A94A3" fontSize={11} tickLine={false} axisLine={false} width={40} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="views" stroke="#FFB020" fill="url(#viewsGrad)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </>
-        )}
-      </PanelCard>
+          {loading && <Spinner label="Loading analytics..." />}
+
+          {real && (
+            <>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={stats!} margin={{ top: 4, right: 0, left: 0, bottom: 24 }}>
+                  <CartesianGrid stroke="#2a3040" vertical={false} />
+                  <XAxis dataKey="title" stroke="#7a8494" fontSize={10} tickLine={false} axisLine={false} interval={0} tickFormatter={(v: string) => (v.length > 22 ? v.slice(0, 21) + "…" : v)} angle={-28} textAnchor="end" height={70} />
+                  <YAxis stroke="#7a8494" fontSize={11} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => (v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${Math.round(v / 1e3)}K` : String(v))} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="views" fill="#6c5ce7" radius={[4, 4, 0, 0]}>
+                    {stats!.map((_, i) => (
+                      <Cell key={i} fill={i === 0 ? "#6c5ce7" : "#4a3db5"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
+                All-time views for your most recent uploads. 7-day deltas need OAuth via the YouTube Analytics API.
+              </div>
+            </>
+          )}
+
+          {!real && !loading && (
+            <>
+              <div className="muted" style={{ fontSize: 11.5, marginBottom: 10 }}>Views, last 7 days (placeholder).</div>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={SAMPLE}>
+                  <defs>
+                    <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6c5ce7" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#6c5ce7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#2a3040" vertical={false} />
+                  <XAxis dataKey="day" stroke="#7a8494" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#7a8494" fontSize={11} tickLine={false} axisLine={false} width={40} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="views" stroke="#6c5ce7" fill="url(#viewsGrad)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </>
+          )}
+        </PanelCard>
+      </div>
     </div>
   );
 }

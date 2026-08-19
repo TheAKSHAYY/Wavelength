@@ -5,7 +5,9 @@ import { config } from "./config.js";
 import authRouter from "./routes/auth.js";
 import stateRouter from "./routes/state.js";
 import generateRouter from "./routes/generate.js";
+import geminiRouter from "./routes/gemini.js";
 import youtubeRouter from "./routes/youtube.js";
+import chatRouter from "./routes/chat.js";
 
 const app = express();
 
@@ -24,7 +26,9 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/state", stateRouter);
 app.use("/api/generate", generateRouter);
+app.use("/api/gemini", geminiRouter);
 app.use("/api/youtube", youtubeRouter);
+app.use("/api/chat", chatRouter);
 
 if (config.isProduction && config.jwtSecret === "dev-only-secret-change-me") {
   console.warn(
@@ -32,7 +36,7 @@ if (config.isProduction && config.jwtSecret === "dev-only-secret-change-me") {
   );
 }
 
-app.listen(config.port, () => {
+app.listen(config.port, "0.0.0.0", () => {
   console.log(`Wavelength backend running at http://localhost:${config.port}`);
   if (!config.openaiApiKey) {
     console.warn(

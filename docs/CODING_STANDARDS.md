@@ -23,7 +23,7 @@ This project should remain understandable, maintainable, and safe for future ite
 ### State rules
 
 - keep app state predictable and serializable when persisting
-- prefer a single, consistent localStorage strategy
+- persist user state server-side (SQLite `kv` blob), synced from the client on a debounce
 - avoid introducing hidden side effects in common render paths
 
 ### Styling rules
@@ -51,7 +51,7 @@ This project should remain understandable, maintainable, and safe for future ite
 - never commit real secrets
 - keep all API keys in `.env` or a deployment secret store
 - avoid console logging sensitive values
-- treat browser localStorage as untrusted and non-sensitive storage
+- treat browser session state and server-side SQLite as the durable store; never put secrets in client code
 
 ## Testing Standards
 
