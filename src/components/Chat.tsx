@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { Send, Sparkles, Bot, User as UserIcon, BookOpen, Lightbulb, Compass, Wand2 } from "lucide-react";
+import { Send, Sparkles, Bot, User as UserIcon, BookOpen, Lightbulb, Compass, Wand2, Trash2 } from "lucide-react";
 import { api } from "../lib/client";
 
 interface Message {
@@ -23,6 +23,101 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   { icon: Lightbulb, label: "Get recommendations", prompt: "What should I focus on next to grow my channel?" },
 ];
 
+function FormattedContent({ text }: { text: string }) {
+  const lines = text.split("\n");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} style={{ height: 6 }} />;
+        }
+
+        // Headings ### or ##
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={idx} style={{ fontSize: 14.5, fontWeight: 700, margin: "6px 0 2px 0", color: "var(--text-primary)" }}>
+              {renderInlineStyles(trimmed.replace(/^###\s+/, ""))}
+            </h4>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3 key={idx} style={{ fontSize: 15.5, fontWeight: 700, margin: "8px 0 4px 0", color: "var(--text-primary)" }}>
+              {renderInlineStyles(trimmed.replace(/^##\s+/, ""))}
+            </h3>
+          );
+        }
+
+        // Bullet point
+        if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          const content = trimmed.replace(/^([•\-\*])\s+/, "");
+          return (
+            <div key={idx} style={{ display: "flex", gap: 8, alignItems: "flex-start", paddingLeft: 4 }}>
+              <span style={{ color: "var(--accent-primary, #38bdf8)", fontWeight: 700, marginTop: 1 }}>•</span>
+              <span style={{ flex: 1 }}>{renderInlineStyles(content)}</span>
+            </div>
+          );
+        }
+
+        // Numbered list (e.g. 1. or 2.)
+        const matchNum = trimmed.match(/^(\d+)\.\s+(.*)/);
+        if (matchNum) {
+          return (
+            <div key={idx} style={{ display: "flex", gap: 8, alignItems: "flex-start", paddingLeft: 4 }}>
+              <span style={{ color: "var(--accent-primary, #38bdf8)", fontWeight: 700, fontSize: 12.5, minWidth: 16 }}>
+                {matchNum[1]}.
+              </span>
+              <span style={{ flex: 1 }}>{renderInlineStyles(matchNum[2])}</span>
+            </div>
+          );
+        }
+
+        // Standard paragraph
+        return (
+          <p key={idx} style={{ margin: 0 }}>
+            {renderInlineStyles(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderInlineStyles(text: string) {
+  // Split by bold (**text**) and code (`code`)
+  const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
+
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} style={{ fontWeight: 700, color: "var(--text-primary)" }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={i}
+          style={{
+            background: "var(--surface-3)",
+            padding: "1px 5px",
+            borderRadius: 4,
+            fontSize: "0.9em",
+            fontFamily: "var(--font-mono)",
+            color: "var(--accent-mint)",
+          }}
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -35,6 +130,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,7 +146,7 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const historyPayload = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
+      const historyPayload = messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
       const response = await api.post<{ reply: string }>("/api/chat", {
         message: text,
         history: historyPayload,
@@ -74,6 +170,7 @@ export default function Chat() {
       setMessages((prev) => [...prev, aiMsg]);
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
@@ -84,16 +181,51 @@ export default function Chat() {
     }
   };
 
+  const handleClear = () => {
+    setMessages([
+      {
+        id: "1",
+        role: "ai",
+        content: "Chat cleared! What would you like to brainstorm next?",
+        timestamp: new Date(),
+      },
+    ]);
+  };
+
   return (
     <div className="chat-container">
-      <div style={{ padding: "clamp(14px, 3vw, 20px) clamp(16px, 3vw, 24px)", borderBottom: "1px solid var(--border)" }}>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, margin: 0 }}>AI Assistant</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Ask anything about your data, trends, or content strategy</p>
+      <div
+        style={{
+          padding: "clamp(14px, 3vw, 20px) clamp(16px, 3vw, 24px)",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, margin: 0 }}>AI Assistant</h2>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+            Ask anything about your data, trends, or content strategy
+          </p>
+        </div>
+        {messages.length > 1 && (
+          <button
+            onClick={handleClear}
+            className="btn btn-ghost"
+            style={{ fontSize: 12, padding: "6px 12px" }}
+            title="Clear Chat History"
+          >
+            <Trash2 size={13} /> Clear Chat
+          </button>
+        )}
       </div>
 
       {messages.length <= 1 && (
         <div style={{ padding: "clamp(12px, 2.5vw, 20px) clamp(16px, 3vw, 24px)", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-dim)", fontWeight: 600 }}>Suggested prompts</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-dim)", fontWeight: 600 }}>
+            Suggested prompts
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {SUGGESTED_PROMPTS.map((p) => (
               <button
@@ -124,15 +256,12 @@ export default function Chat() {
 
       <div className="chat-messages">
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`chat-message ${msg.role}`}
-          >
+          <div key={msg.id} className={`chat-message ${msg.role}`}>
             <div className="chat-message-avatar">
               {msg.role === "user" ? <UserIcon size={14} /> : <Bot size={14} />}
             </div>
             <div className="chat-message-bubble">
-              {msg.content}
+              <FormattedContent text={msg.content} />
             </div>
           </div>
         ))}
@@ -157,8 +286,9 @@ export default function Chat() {
 
       <div className="chat-input-area">
         <textarea
+          ref={inputRef}
           className="chat-input"
-          placeholder="Ask a question..."
+          placeholder="Ask a question about YouTube strategy, video hooks, titles, or scripts..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
