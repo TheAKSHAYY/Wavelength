@@ -1,46 +1,26 @@
-# Changelog
+# Wavelength Changelog
 
-## 2026-08-19 (v2.1.0)
-
+## [2.1.0] - 2026-08-21
 ### Added
+- **YouTube Thumbnail Design Studio**: Complete re-architecture moving from prompt synthesis to a full YouTube Creative Director pipeline:
+  - 12 Thumbnail Objectives (Curiosity, Warning, Transformation, Discovery, etc.) with 1-second viewer promises.
+  - 6 Dynamic Composition Layouts (`LEFT_TEXT_RIGHT_SUBJECT`, `RIGHT_TEXT_LEFT_SUBJECT`, `SPLIT_COMPARISON`, etc.).
+  - 1–4 word punchy hook text strategy with negative space zoning.
+  - Automated Thumbnail QA Checklist (Focal point clarity, 1-sec story immediacy, text brevity, mobile readability, and non-inventive accuracy).
+  - Dynamic frontend typography canvas with multi-line word stacking, high-contrast strokes, and backdrop pills.
+- **Google Gemini Multi-Model Cascade**: Automatic fallback cascade across `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.6-flash`, and `gemini-3.7-flash` with rate-limit recovery.
+- **Multilingual Script Assistant**: Added structured YouTube script generation supporting English, Hindi (Devanagari), and creator Hinglish.
+- **10-Framework Title Intelligence**: Dynamic JSON title engine across 10 psychological frameworks with CTR scores and virality triggers.
+- **Pollinations FLUX & Google Imagen 3 Engine**: Live 1280x720 16:9 HD thumbnail rendering without embedded text distortion.
+- **Multi-Domain Automated Test Runners**: Added `test-thumbnail-designer.ts`, `test-image-pipeline.ts`, and `verify-topics.ts`.
 
-- **Creator Profile & Persona Section (`/profile`)**:
-  - Dedicated Profile Page ([`ProfilePage.tsx`](file:///c:/Users/Pc/OneDrive/Desktop/wavelength/wavelength/src/pages/ProfilePage.tsx)) with 4 modular tabs:
-    1. **Creator Persona & Brand**: Name, channel name, handle, 500-character elevator bio, custom avatar theme color picker (8 palettes), upload frequency target, and YouTube channel sync.
-    2. **Socials & Links**: Social profile connectors for X/Twitter, GitHub, Discord community, LinkedIn, and personal portfolio.
-    3. **Workspace Activity & Pipeline Stats**: Live computed metrics (Saved Ideas, Script Drafts, Scheduled Videos, Tracked Competitors, Researched Keywords).
-    4. **Security & Credentials**: Session status overview, account email, and secure password update form with live validation.
-- **Backend Profile & Security API**:
-  - `PUT /api/auth/profile`: Update creator profile attributes, social links, and channel branding.
-  - `PUT /api/auth/password`: Secure password change verifying existing hashed credentials.
-  - SQLite auto-migrations for profile columns (`channel_name`, `handle`, `bio`, `avatar_color`, `niche`, `target_audience`, `tone`, `youtube_channel_id`, `upload_goal`, `social_links`).
-- **Intelligence Test Suites**:
-  - Added unit tests for Title Intelligence 10-framework synthesis and Script Assistant multi-language generators in `server/__tests__/intelligence.test.ts`.
-
-### Fixed & Improved
-
-- **Top Navigation Dropdown Positioning**:
-  - Fixed popover horizontal clipping by anchoring with `right: 0 !important; left: auto !important` and smooth entry transitions.
-  - Introduced dedicated `.dropdown-menu-item` classes replacing generic buttons for pixel-perfect hover states.
-- **Security & Push Hygiene**:
-  - Sanitized `.env.example` placeholder tokens to pass GitHub Secret Scanning Push Protection.
-  - Updated `.gitignore` to prevent log artifacts from being staged.
-
----
-
-## 2026-08-03
+### Changed
+- Removed all hardcoded static archetypes and 700-line keyword ladder fallbacks.
+- Removed universal coder/developer/laptop biases from non-tech thumbnail presets and prompts.
+- Replaced fake `"98% Topic Grounded"` confidence badge with authentic structural metadata and QA diagnostics.
+- Refactored `/api/chat` to use the unified multi-model cascade with clean multi-turn history.
 
 ### Fixed
-
-- **runtime crash**: `TopNav` referenced `useLocation` without importing it, crashing the app for any signed-in user → removed the unused reference.
-- **invalid JSX prop**: removed the invalid `as="span"` attribute on a `<button>` in `Upload.tsx`.
-- **unused imports** left over from the UI refactor across all pages → cleaned up; `npm run typecheck` and `npm run lint` now pass clean.
-- **Vite proxy port desync**: `vite.config.ts` now imports `dotenv/config` so the `/api` proxy target reads `PORT` from `.env` and stays in sync with the Express backend.
-
-### Added
-
-- **dev seed utility**: `server/seed.ts` and the `npm run seed:dev` script create a ready-to-sign-in local account (`admin@wavelength.local` / `password123`).
-
----
-
-Last updated: August 2026
+- Fixed silent mock-data fallback that was hiding API failure states.
+- Fixed Gemini API 400 Bad Request error caused by initial assistant role ordering in chat conversations.
+- Fixed positional parameter mapping in `generateDynamicScript`.

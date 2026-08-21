@@ -8,15 +8,11 @@ import Chat from "./components/Chat";
 import AuthPage from "./pages/AuthPage";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
-const FieldResearchPage = lazy(() => import("./pages/FieldResearchPage"));
-const PackagePage = lazy(() => import("./pages/PackagePage"));
-const TrendsPage = lazy(() => import("./pages/TrendsPage"));
-const CompetitorsPage = lazy(() => import("./pages/CompetitorsPage"));
-const KeywordsPage = lazy(() => import("./pages/KeywordsPage"));
-const IdeasPage = lazy(() => import("./pages/IdeasPage"));
-const TitlesPage = lazy(() => import("./pages/TitlesPage"));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
+const ResearchPage = lazy(() => import("./pages/ResearchPage"));
+const PackagingPage = lazy(() => import("./pages/PackagingPage"));
 const ScriptPage = lazy(() => import("./pages/ScriptPage"));
-const ImageGeneratorPage = lazy(() => import("./pages/ImageGeneratorPage"));
+const ShortsPage = lazy(() => import("./pages/ShortsPage"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
@@ -72,21 +68,39 @@ function AppLayout() {
         <main className="app-content">
           <Suspense fallback={<PageFallback />}>
             <Routes>
+              {/* Home / Command Center */}
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/field-research" element={<FieldResearchPage />} />
-              <Route path="/package" element={<PackagePage />} />
-              <Route path="/trends" element={<TrendsPage />} />
-              <Route path="/competitors" element={<CompetitorsPage />} />
-              <Route path="/keywords" element={<KeywordsPage />} />
-              <Route path="/ideas" element={<IdeasPage />} />
-              <Route path="/titles" element={<TitlesPage />} />
+
+              {/* Studios */}
+              <Route path="/shorts" element={<ShortsPage />} />
+              <Route path="/shorts-studio" element={<ShortsPage />} />
+              <Route path="/packaging" element={<PackagingPage />} />
+              <Route path="/package" element={<PackagingPage />} />
+              <Route path="/titles" element={<PackagingPage />} />
+              <Route path="/image-generator" element={<PackagingPage />} />
+              <Route path="/thumbnails" element={<PackagingPage />} />
               <Route path="/script" element={<ScriptPage />} />
-              <Route path="/image-generator" element={<ImageGeneratorPage />} />
+              <Route path="/longform" element={<ScriptPage />} />
+
+              {/* Workspace */}
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/research" element={<ResearchPage />} />
+              <Route path="/field-research" element={<ResearchPage />} />
+              <Route path="/keywords" element={<ResearchPage />} />
+              <Route path="/trends" element={<ResearchPage />} />
+              <Route path="/competitors" element={<ResearchPage />} />
+              <Route path="/ideas" element={<ResearchPage />} />
+
+              {/* Plan (accessible via direct link or calendar) */}
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+
+              {/* System & Copilot */}
+              <Route path="/chat" element={<Chat />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+
+              {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

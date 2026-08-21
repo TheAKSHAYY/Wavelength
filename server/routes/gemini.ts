@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { config } from "../config.js";
 import { aiLimiter, requireAuthOrToken } from "../middleware.js";
-import { generateMockData } from "../mockData.js";
-import { synthesizeRealYouTubeResponse } from "../services/realDataSynthesizer.js";
+import { generateAICompletion } from "../services/aiProvider.js";
 
 const router = Router();
 
@@ -110,137 +109,101 @@ router.post("/generate", async (req, res) => {
     return res.status(400).json({ error: "Missing 'prompt' in request body." });
   }
 
-  const systemStr = system || "";
-
-  if (config.geminiApiKey) {
-    const input = [system, prompt].filter((s): s is string => !!s && !!s.trim()).join("\n\n").trim();
-
-    try {
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent?key=${config.geminiApiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: input }] }],
-            generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: 2048 },
-          }),
-        }
-      );
-
-      const data = (await resp.json()) as {
-        candidates?: GeminiCandidate[];
-        error?: { message?: string };
-      };
-
-      if (resp.ok) {
-        const text = (data.candidates || [])
-          .flatMap((c) => c.content?.parts || [])
-          .flatMap((p) => (p.text ? [p.text] : []))
-          .join("\n")
-          .trim();
-
-        if (text) {
-          return res.json({ text });
-        }
-      } else {
-        console.warn("Gemini API error:", data.error?.message || resp.status);
-      }
-    } catch (err) {
-      console.warn("Gemini proxy error:", err);
-    }
+  try {
+    const result = await generateAICompletion({
+      prompt,
+      system: system || "",
+      temperature,
+    });
+    return res.json({ text: result.text, provider: result.provider });
+  } catch (err) {
+    console.error("AI generation error in gemini route:", err);
+    return res.status(500).json({ error: "AI generation failed" });
   }
-
-  // Real YouTube Data Synthesis
-  if (config.youtubeApiKey) {
-    try {
-      const realYouTubeData = await synthesizeRealYouTubeResponse(systemStr, prompt);
-      if (realYouTubeData) {
-        return res.json({ text: realYouTubeData });
-      }
-    } catch (err) {
-      console.error("Real YouTube data synthesis error in gemini route:", err);
-    }
-  }
-
-  const mockText = generateMockData(systemStr, prompt);
-  return res.json({ text: mockText });
 });
 
 router.post("/generate-image", async (req, res) => {
-  const { prompt, style } = req.body as { prompt?: string; style?: string };
+  const { prompt, style, negativePrompt } = req.body as {
+    prompt?: string;
+    style?: string;
+    negativePrompt?: string;
+  };
 
   if (typeof prompt !== "string" || !prompt.trim()) {
     return res.status(400).json({ error: "Missing 'prompt' in request body." });
   }
 
   const styleStr = style || "";
-
-  if (!config.geminiApiKey) {
-    console.warn("WARNING: GEMINI_API_KEY is not set. Using local SVG generator.");
-    const mockImage = generateMockImageSvg(prompt, styleStr);
-    return res.json({
-      image: mockImage,
-      text: `Generated a simulated ${styleStr || "custom"} image based on your prompt: "${prompt}"`,
-    });
-  }
-
   const fullPrompt = styleStr ? `${styleStr}. ${prompt}` : prompt;
+  const negPromptStr = (negativePrompt || "").trim();
 
-  try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent?key=${config.geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-          generationConfig: { responseModalities: ["Image", "Text"], temperature: 1.0 },
-        }),
+  // 1. Try Google Imagen 3 if API Key is configured
+  if (config.geminiApiKey) {
+    try {
+      const imagenResp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${config.geminiApiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instances: [{ prompt: fullPrompt }],
+            parameters: { sampleCount: 1, aspectRatio: "16:9" },
+          }),
+        }
+      );
+
+      if (imagenResp.ok) {
+        const imagenData = (await imagenResp.json()) as {
+          predictions?: Array<{ bytesBase64Encoded?: string; mimeType?: string }>;
+        };
+        const firstPred = imagenData.predictions?.[0];
+        if (firstPred?.bytesBase64Encoded) {
+          const mime = firstPred.mimeType || "image/jpeg";
+          return res.json({
+            image: `data:${mime};base64,${firstPred.bytesBase64Encoded}`,
+            provider: "imagen",
+            text: `Generated visual for "${prompt}" using Imagen 3.`,
+          });
+        }
       }
-    );
-
-    const data = (await resp.json()) as {
-      candidates?: GeminiCandidate[];
-      error?: { message?: string };
-    };
-
-    if (!resp.ok) {
-      console.error("Gemini image-gen error:", data);
-      console.warn("Gemini image-gen API request failed. Falling back to local SVG generator.");
-      const mockImage = generateMockImageSvg(prompt, styleStr);
-      return res.json({
-        image: mockImage,
-        text: `Generated a simulated ${styleStr || "custom"} image based on your prompt: "${prompt}"`,
-      });
+    } catch (imagenErr) {
+      console.warn("Imagen 3 generation attempt failed, falling back to FLUX:", imagenErr);
     }
-
-    const parts = (data.candidates || []).flatMap((c) => c.content?.parts || []);
-    const inline = parts.find((p) => p.inlineData);
-    const textPart = parts.find((p) => p.text);
-
-    if (!inline) {
-      console.warn("Gemini did not return an image. Falling back to SVG generator.");
-      const mockImage = generateMockImageSvg(prompt, styleStr);
-      return res.json({
-        image: mockImage,
-        text: `Generated a simulated ${styleStr || "custom"} image. (No image found in Gemini output)`,
-      });
-    }
-
-    return res.json({
-      image: `data:${inline.inlineData!.mimeType};base64,${inline.inlineData!.data}`,
-      text: textPart?.text,
-    });
-  } catch (err) {
-    console.error("Gemini image proxy error:", err);
-    console.warn("Falling back to local SVG generator due to connection error.");
-    const mockImage = generateMockImageSvg(prompt, styleStr);
-    return res.json({
-      image: mockImage,
-      text: `Generated a simulated ${styleStr || "custom"} image based on your prompt: "${prompt}"`,
-    });
   }
+
+  // 2. High-Fidelity Generative Image Provider (Pollinations FLUX)
+  try {
+    const seed = Math.floor(Math.random() * 1000000);
+    let pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+      fullPrompt
+    )}?width=1280&height=720&nologo=true&seed=${seed}&model=flux`;
+
+    if (negPromptStr) {
+      pollinationsUrl += `&negative=${encodeURIComponent(negPromptStr)}`;
+    }
+
+    const polResp = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(18000) });
+    if (polResp.ok) {
+      const buffer = await polResp.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      const mime = polResp.headers.get("content-type") || "image/jpeg";
+      return res.json({
+        image: `data:${mime};base64,${base64}`,
+        provider: "flux",
+        text: `Generated high-resolution AI thumbnail visual for "${prompt}".`,
+      });
+    }
+  } catch (polErr) {
+    console.warn("Pollinations AI image generation failed:", polErr);
+  }
+
+  // 3. Simulated SVG fallback for development if network is offline
+  const mockImage = generateMockImageSvg(prompt, styleStr);
+  return res.json({
+    image: mockImage,
+    provider: "mock",
+    text: `Simulated visual placeholder generated for: "${prompt}"`,
+  });
 });
 
 export default router;

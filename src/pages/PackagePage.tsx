@@ -6,6 +6,8 @@ import { generateJSON } from "../lib/ai";
 import { packageSchema } from "../lib/schemas";
 import { useAppState } from "../lib/store";
 import { useTask } from "../lib/hooks";
+import { generateImageUrl, preloadImage } from "../lib/imageGenerator";
+import { api } from "../lib/client";
 
 const TABS = [
   { key: "idea", label: "Idea & Demand", icon: Sparkles },
@@ -29,7 +31,7 @@ export default function PackagePage() {
   const { loading, error, clearError, run } = useTask();
 
   useEffect(() => {
-    if (passedTopic && passedTopic !== topic) {
+    if (passedTopic) {
       setTopic(passedTopic);
     }
   }, [passedTopic]);
@@ -57,26 +59,26 @@ export default function PackagePage() {
     if (!pkg?.thumbnail) return;
     setRenderingThumbnail(true);
     try {
-      const visualPrompt = `${pkg.thumbnail.composition}, ${pkg.thumbnail.text}, viral high CTR YouTube thumbnail style, 8k resolution, photorealistic cinematic lighting`;
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-        visualPrompt
-      )}?width=1280&height=720&model=flux&nologo=true&seed=${Math.floor(Math.random() * 999999)}`;
-      
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        setThumbnailImage(url);
-        setRenderingThumbnail(false);
-      };
-      img.onerror = () => {
-        setThumbnailImage(url);
-        setRenderingThumbnail(false);
-      };
-      img.src = url;
+      // Use the deep semantic thumbnail intelligence pipeline
+      const intel = await api.post<{ enginePrompt?: string }>("/api/generate/thumbnail-intelligence", {
+        title: pkg.idea?.title || topic,
+        topic: topic || pkg.idea?.title,
+        script: pkg.script?.hook || "",
+      });
+      const promptToUse = intel.enginePrompt || `16:9 YouTube thumbnail about ${pkg.idea?.title || topic}. ${pkg.thumbnail.composition}, professional lighting, 8k resolution`;
+      const url = generateImageUrl(promptToUse, { width: 1280, height: 720, model: "flux" });
+      await preloadImage(url);
+      setThumbnailImage(url);
     } catch {
+      const visualPrompt = `16:9 YouTube thumbnail about ${pkg.idea?.title || topic}. ${pkg.thumbnail.composition}, professional lighting, 8k resolution`;
+      const url = generateImageUrl(visualPrompt, { width: 1280, height: 720, model: "flux" });
+      await preloadImage(url);
+      setThumbnailImage(url);
+    } finally {
       setRenderingThumbnail(false);
     }
   };
+
 
   const openYouTubeSearch = (query: string) => {
     window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, "_blank");
@@ -264,7 +266,17 @@ export default function PackagePage() {
 
                     <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                       <button
-                        onClick={() => navigate("/image-generator", { state: { prompt: pkg.thumbnail?.composition } })}
+                        onClick={() =>
+                          navigate("/image-generator", {
+                            state: {
+                              title: pkg?.idea?.title || topic,
+                              script: pkg?.script?.hook || "",
+                              topic: topic || pkg?.idea?.title,
+                              audience: pkg?.idea?.audience,
+                              prompt: `${pkg.thumbnail?.composition}, ${pkg.thumbnail?.text}, viral high CTR YouTube thumbnail style, 8k resolution, photorealistic cinematic lighting`,
+                            },
+                          })
+                        }
                         style={{
                           display: "inline-flex",
                           alignItems: "center",

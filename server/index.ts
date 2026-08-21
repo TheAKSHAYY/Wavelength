@@ -18,8 +18,18 @@ app.use(cookieParser());
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
-    hasApiKey: Boolean(config.openaiApiKey),
-    model: config.openaiModel,
+    providers: {
+      openai: Boolean(config.openaiApiKey),
+      gemini: Boolean(config.geminiApiKey),
+      groq: Boolean(config.groqApiKey),
+      openrouter: Boolean(config.openrouterApiKey),
+      youtube: Boolean(config.youtubeApiKey),
+    },
+    activeModel:
+      config.geminiApiKey ? config.geminiModel :
+      config.groqApiKey ? config.groqModel :
+      config.openrouterApiKey ? config.openrouterModel :
+      config.openaiApiKey ? config.openaiModel : "local-synthesizer",
   });
 });
 
@@ -38,9 +48,18 @@ if (config.isProduction && config.jwtSecret === "dev-only-secret-change-me") {
 
 app.listen(config.port, "0.0.0.0", () => {
   console.log(`Wavelength backend running at http://localhost:${config.port}`);
-  if (!config.openaiApiKey) {
-    console.warn(
-      "WARNING: OPENAI_API_KEY is not set. Copy .env.example to .env and add your key."
-    );
+  const activeProviders = [
+    config.geminiApiKey && "Google Gemini",
+    config.groqApiKey && "Groq Cloud",
+    config.openrouterApiKey && "OpenRouter",
+    config.openaiApiKey && "OpenAI",
+    config.youtubeApiKey && "YouTube Data API",
+  ].filter(Boolean);
+
+  if (activeProviders.length > 0) {
+    console.log(`Active API Providers: ${activeProviders.join(", ")}`);
+  } else {
+    console.log("Running in offline zero-key mode with local research synthesis & Pollinations FLUX engine.");
   }
 });
+

@@ -16,11 +16,12 @@ interface SuggestedPrompt {
 }
 
 const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
-  { icon: Sparkles, label: "Generate ideas", prompt: "What are 5 trending video ideas for my niche?" },
-  { icon: Compass, label: "Research a topic", prompt: "Research the current landscape of system design content on YouTube." },
-  { icon: BookOpen, label: "Analyze competitors", prompt: "Analyze my top 3 competitors and find content gaps." },
-  { icon: Wand2, label: "Full package", prompt: "Create a complete content package for a video about TypeScript best practices." },
-  { icon: Lightbulb, label: "Get recommendations", prompt: "What should I focus on next to grow my channel?" },
+  { icon: Sparkles, label: "Make Hook Stronger", prompt: "How can I rewrite the opening hook to create stronger curiosity and stakes in the first 3 seconds?" },
+  { icon: Wand2, label: "Make More Conversational", prompt: "Rewrite this segment to sound completely conversational and natural for my audience with zero corporate cliches." },
+  { icon: Compass, label: "Convert to Hinglish", prompt: "Convert this script section into natural Hinglish phrasing for Indian college tech students." },
+  { icon: Lightbulb, label: "Turn This Into B-Roll", prompt: "Suggest 3 visual b-roll and screen recording cues that support this point without showing talking head." },
+  { icon: BookOpen, label: "Create 3 Variations", prompt: "Generate 3 different creative angles and title variations for this video idea." },
+  { icon: Trash2, label: "Shorten This Scene", prompt: "Tighten this scene down by 30% while preserving the core insight." },
 ];
 
 function FormattedContent({ text }: { text: string }) {
@@ -52,7 +53,7 @@ function FormattedContent({ text }: { text: string }) {
 
         // Bullet point
         if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-          const content = trimmed.replace(/^([•\-\*])\s+/, "");
+          const content = trimmed.replace(/^([•\-*])\s+/, "");
           return (
             <div key={idx} style={{ display: "flex", gap: 8, alignItems: "flex-start", paddingLeft: 4 }}>
               <span style={{ color: "var(--accent-primary, #38bdf8)", fontWeight: 700, marginTop: 1 }}>•</span>
@@ -117,13 +118,15 @@ function renderInlineStyles(text: string) {
     return part;
   });
 }
+import { useStore } from "../lib/store";
 
 export default function Chat() {
+  const { user, activeProject } = useStore();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "ai",
-      content: "Hi! I'm your AI research assistant. I can help you discover trends, generate video ideas, analyze competitors, and build content strategies. What would you like to explore?",
+      content: "Hi, I'm your **Wavelength Pre-Production Collaborator**. I can help you strengthen retention hooks, convert scripts to natural Hinglish, generate b-roll cues, and audit titles. What are you working on?",
       timestamp: new Date(),
     },
   ]);
@@ -136,8 +139,8 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async () => {
-    const text = input.trim();
+  const sendMessage = async (customText?: string) => {
+    const text = (customText || input).trim();
     if (!text || loading) return;
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, timestamp: new Date() };
@@ -147,8 +150,13 @@ export default function Chat() {
 
     try {
       const historyPayload = messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
+      const projectContext = activeProject ? `[Active Project: "${activeProject.title}" (Type: ${activeProject.contentType}, Status: ${activeProject.status})]` : "";
+      const creatorContext = user?.niche ? `[Creator Niche: ${user.niche}, Target Audience: ${user.target_audience || "General"}, Tone: ${user.tone || "Direct & Punchy"}]` : "";
+
+      const fullMessage = `${projectContext} ${creatorContext} ${text}`.trim();
+
       const response = await api.post<{ reply: string }>("/api/chat", {
-        message: text,
+        message: fullMessage,
         history: historyPayload,
       });
 
@@ -159,12 +167,14 @@ export default function Chat() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Chat error:", err);
+      const errorMessage =
+        err?.message || "I'm having trouble connecting to the AI strategist right now. Please check your connection and try again.";
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: "I'm having trouble connecting right now. Please check your connection and try again.",
+        content: `⚠️ **Error:** ${errorMessage}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
@@ -295,7 +305,7 @@ export default function Chat() {
           rows={1}
           style={{ resize: "none" }}
         />
-        <button className="chat-send" onClick={sendMessage} disabled={!input.trim() || loading} aria-label="Send message">
+        <button className="chat-send" onClick={() => sendMessage()} disabled={!input.trim() || loading} aria-label="Send message">
           <Send size={16} />
         </button>
       </div>

@@ -804,6 +804,16 @@ export default function ProfilePage() {
               </div>
 
               <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#38bdf8", fontSize: 12, fontWeight: 700 }}>
+                  <TrendingUp size={14} /> SAVED TITLES
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, fontFamily: "var(--font-mono)" }}>
+                  {totalTitles}
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>Optimized formulas</div>
+              </div>
+
+              <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent-mint)", fontSize: 12, fontWeight: 700 }}>
                   <FileText size={14} /> SCRIPT DRAFTS
                 </div>

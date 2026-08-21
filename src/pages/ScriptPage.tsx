@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FileText,
   Loader2,
@@ -10,40 +10,106 @@ import {
   Layers,
   Clock,
   CheckCircle2,
+  Image as ImageIcon,
+  FolderGit2,
+  User,
+  Save,
+  Clapperboard,
 } from "lucide-react";
 import { ErrorBanner, EmptyState, Pill } from "../components/SharedUI";
 import { api } from "../lib/client";
-import { useAppState } from "../lib/store";
+import { useAppState, useStore } from "../lib/store";
 import { useTask } from "../lib/hooks";
 import type { Script } from "../types";
 
 export default function ScriptPage() {
   const location = useLocation();
-  const passedTitle = (location.state as { topic?: string })?.topic || "";
+  const navigate = useNavigate();
+  const { user, activeProject, updateProject, createProject, setCurrentProject } = useStore();
+  const passedTitle = (location.state as { topic?: string; title?: string })?.title || (location.state as { topic?: string })?.topic || "";
   const passedBaseTopic = (location.state as { baseTopic?: string })?.baseTopic || "";
   const passedAudience = (location.state as { audience?: string })?.audience || "";
   const passedAngle = (location.state as { angle?: string })?.angle || "";
 
   const [script, setScript] = useAppState("script");
-  const [title, setTitle] = useState(passedTitle || "");
-  const [topic, setTopic] = useState(passedBaseTopic || passedTitle || "Java DSA");
-  const [audience, setAudience] = useState(passedAudience || "Students and beginners");
-  const [language, setLanguage] = useState<"English" | "Hindi" | "Hinglish">("English");
+  const [title, setTitle] = useState(passedTitle || activeProject?.title || "");
+  const [topic, setTopic] = useState(passedBaseTopic || passedTitle || activeProject?.topic || "Java DSA");
+  const [audience, setAudience] = useState(passedAudience || activeProject?.targetAudience || user?.target_audience || "Students and beginners");
+  const [language, setLanguage] = useState<"English" | "Hindi" | "Hinglish">(activeProject?.language || "English");
   const [duration, setDuration] = useState<"5-8 minutes" | "8-12 minutes" | "12-15 minutes">("8-12 minutes");
   const [mode, setMode] = useState<"outline" | "full">("full");
   const [copied, setCopied] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const openThumbnailStudio = () => {
+    navigate("/packaging", {
+      state: {
+        title: script?.title || title || topic,
+        hook: script?.hook || "",
+        topic: topic || title,
+        audience: script?.audience || audience,
+        angle: passedAngle,
+        projectId: activeProject?.id,
+      },
+    });
+  };
+
+  const handleCreateShortsFromVideo = () => {
+    navigate("/shorts", {
+      state: {
+        title: script?.title || title || topic,
+        topic: topic || title,
+        hook: script?.hook || "",
+        angle: passedAngle,
+        projectId: activeProject?.id,
+      },
+    });
+  };
+
+  const handleSaveToProject = () => {
+    if (!script) return;
+    const longFormObj = {
+      title: script.title || title || topic,
+      hook: script.hook,
+      intro: script.intro,
+      sections: (script.sections || []).map((s, idx) => ({
+        id: `sec_${idx + 1}`,
+        heading: s.heading,
+        goal: s.purpose || "",
+        spokenVoiceover: s.content,
+        visualCue: s.retentionOpportunity || "",
+      })),
+      cta: script.cta,
+      estimatedMinutes: Number((totalWords / 140).toFixed(1)) || 8,
+    };
+
+    if (activeProject) {
+      updateProject(activeProject.id, {
+        longFormScript: longFormObj,
+        title: script.title || title || activeProject.title,
+        progressPercent: Math.max(activeProject.progressPercent || 0, 85),
+        status: "Writing",
+      });
+    } else {
+      const proj = createProject({
+        title: script.title || title || topic,
+        topic: topic || title,
+        contentType: "Full Video",
+        longFormScript: longFormObj,
+        progressPercent: 85,
+        status: "Writing",
+      });
+      setCurrentProject(proj.id);
+    }
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
+  };
   const { loading, error, clearError, run } = useTask();
 
   useEffect(() => {
-    if (passedTitle && passedTitle !== title) {
-      setTitle(passedTitle);
-    }
-    if (passedBaseTopic && passedBaseTopic !== topic) {
-      setTopic(passedBaseTopic);
-    }
-    if (passedAudience && passedAudience !== audience) {
-      setAudience(passedAudience);
-    }
+    if (passedTitle) setTitle(passedTitle);
+    if (passedBaseTopic) setTopic(passedBaseTopic);
+    if (passedAudience) setAudience(passedAudience);
   }, [passedTitle, passedBaseTopic, passedAudience]);
 
   const generate = async (customMode?: "outline" | "full") => {
@@ -118,27 +184,150 @@ export default function ScriptPage() {
 
   return (
     <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              color: "var(--accent-mint, #34d399)",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              fontWeight: 700,
-            }}
-          >
-            CREATOR-GRADE SCRIPT ENGINE
+      {/* Project & Creator Profile Context Bar */}
+      {activeProject && (
+        <div
+          style={{
+            background: "var(--surface-2)",
+            border: "1px solid rgba(168, 85, 247, 0.2)",
+            borderRadius: "var(--radius-md)",
+            padding: "8px 14px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <FolderGit2 size={15} color="#a855f7" />
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+              PROJECT: {activeProject.title}
+            </span>
+            <span
+              style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                padding: "2px 6px",
+                borderRadius: 4,
+                background: "rgba(168, 85, 247, 0.15)",
+                color: "#a855f7",
+              }}
+            >
+              {activeProject.status}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11.5 }}>
+            <button
+              onClick={() => navigate("/packaging", { state: { projectId: activeProject.id } })}
+              style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}
+            >
+              Packaging {activeProject.packaging ? "✓" : "○"}
+            </button>
+            <span style={{ color: "#a855f7", fontWeight: 700 }}>
+              Long-Form Studio (Active)
+            </span>
+            <button
+              onClick={() => navigate("/shorts", { state: { projectId: activeProject.id } })}
+              style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}
+            >
+              Shorts {(activeProject.shorts?.length || 0) > 0 ? "✓" : "○"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Creator Profile Memory Banner */}
+      <div
+        style={{
+          background: "rgba(168, 85, 247, 0.04)",
+          border: "1px solid rgba(168, 85, 247, 0.12)",
+          borderRadius: "var(--radius-md)",
+          padding: "6px 12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: 11.5,
+          color: "var(--text-secondary)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <User size={13} color="#a855f7" />
+          <span>
+            <strong>Creator Memory:</strong> {user?.niche ? user.niche.slice(0, 26) : "Tech & Education"} • Audience: <strong>{audience}</strong> • Language: <strong>{language}</strong>
           </span>
         </div>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: 0 }}>
-          YouTube Script Assistant
-        </h1>
-        <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 14 }}>
-          Dynamic retention-focused scriptwriting engine tailored to your exact video title, topic, audience, and language
-        </p>
+        <button
+          onClick={() => navigate("/profile")}
+          style={{ background: "none", border: "none", color: "#a855f7", fontWeight: 600, cursor: "pointer", fontSize: 11 }}
+        >
+          [ Override ]
+        </button>
+      </div>
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+                color: "#a855f7",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontWeight: 700,
+              }}
+            >
+              STUDIO · LONG-FORM SCRIPTING
+            </span>
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: 0 }}>
+            Long-Form Studio
+          </h1>
+          <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 14 }}>
+            Dynamic retention-focused scriptwriting engine tailored to your exact video title, topic, audience, and language.
+          </p>
+        </div>
+
+        {script && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              onClick={handleSaveToProject}
+              className="btn btn-outline"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 6,
+                fontSize: 13,
+                cursor: "pointer",
+                background: savedSuccess ? "rgba(16, 185, 129, 0.15)" : undefined,
+                color: savedSuccess ? "#34d399" : undefined,
+                borderColor: savedSuccess ? "#34d399" : undefined,
+              }}
+            >
+              {savedSuccess ? <Check size={14} /> : <Save size={14} />}
+              {savedSuccess ? "Saved to Project!" : "Save to Project"}
+            </button>
+            <button
+              onClick={openThumbnailStudio}
+              className="btn btn-outline"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
+            >
+              <ImageIcon size={14} color="#f59e0b" /> Create Thumbnail
+            </button>
+            <button
+              onClick={handleCreateShortsFromVideo}
+              className="btn btn-outline"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
+            >
+              <Clapperboard size={14} color="#38bdf8" /> Create Shorts from Video
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Context Inputs Card */}
@@ -369,8 +558,24 @@ export default function ScriptPage() {
               </button>
 
               <button
-                onClick={downloadScript}
+                onClick={openThumbnailStudio}
                 className="btn"
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 12.5,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "linear-gradient(135deg, var(--accent), var(--accent-warm))",
+                  color: "#fff",
+                }}
+              >
+                <ImageIcon size={13} /> Studio Thumbnail
+              </button>
+
+              <button
+                onClick={downloadScript}
+                className="btn btn-ghost"
                 style={{ padding: "6px 12px", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}
               >
                 <Download size={13} /> Export .MD
@@ -413,11 +618,28 @@ export default function ScriptPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 14, lineHeight: 1.6 }}>
             {/* HOOK */}
             <div style={{ background: "var(--surface-2)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                 <span style={{ color: "var(--accent-mint, #34d399)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800 }}>
                   ⚡ RETENTION HOOK (0:00 - 0:15)
                 </span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>High-curiosity problem setup</span>
+                <button
+                  onClick={openThumbnailStudio}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    background: "rgba(56, 189, 248, 0.12)",
+                    color: "var(--accent-primary, #38bdf8)",
+                    border: "1px solid rgba(56, 189, 248, 0.3)",
+                    padding: "3px 8px",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ImageIcon size={12} /> Craft Matching Thumbnail
+                </button>
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 500, color: "var(--text-primary)" }}>{script.hook}</div>
             </div>
@@ -476,6 +698,34 @@ export default function ScriptPage() {
                 </div>
               </div>
             )}
+
+            {/* Next Step Transition to Content Calendar */}
+            <div
+              style={{
+                marginTop: 12,
+                padding: "16px 20px",
+                background: "linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                border: "1px solid rgba(52, 211, 153, 0.3)",
+                borderRadius: "var(--radius-md)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Script Ready for Production</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Add this video to your publishing calendar to track production and release dates.</div>
+              </div>
+              <button
+                onClick={() => navigate("/calendar", { state: { newTitle: script.title || title || topic, newTopic: topic } })}
+                className="btn btn-primary"
+                style={{ padding: "8px 18px", fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                Add to Content Calendar →
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,144 +1,113 @@
-# Architecture
+# System Architecture
 
-## System Overview
+## Overview
 
-Wavelength follows a two-layer, TypeScript architecture:
+Wavelength is structured as a decoupled client-server architecture designed for high-velocity YouTube creator workflows, robust AI orchestration, and deterministic visual and script intelligence.
 
-- **frontend** — React + Vite SPA (TypeScript/JSX) that presents the dashboard, routes between pages, and orchestrates user actions.
-- **backend** — Express API (TypeScript, run via `tsx`) that proxies requests to OpenAI, owns the API key, and persists per-user state server-side.
-
-The client and backend run side by side in local development, driven by a single `npm run dev` command (see [./README.md](./README.md)).
-
-## Runtime Flow
-
-### Local development flow
-
-1. The user opens the Vite development server at `http://localhost:5173`.
-2. `vite.config.ts` runs `import "dotenv/config"` so the backend port (`PORT`) is read from `.env` before the proxy target is computed.
-3. The React app boots. The root layout (`StoreProvider`) calls `GET /api/auth/me`; if unauthenticated it renders the `AuthPage`, otherwise the main layout with `Sidebar`, `TopNav`, and routed pages.
-4. A user action triggers a fetch to `/api/...` (relative, same-origin).
-5. Vite proxies `/api` to `http://localhost:<PORT>` (default `3001`, from `.env`).
-6. Express reads environment variables and calls the OpenAI Responses API.
-7. The backend returns parsed text; the frontend validates it with **zod** and renders structured data into the dashboard.
-
-> **Proxy port note.** `vite.config.ts` and `server/config.ts` both load `.env` (`import "dotenv/config"`). This keeps the Vite proxy target (`localhost:${PORT}`) and the Express `listen(PORT)` in sync. Without the dotenv import in the Vite config the dev server proxies to the fallback port (`4180`) while the server listens on `3001`, producing `ECONNREFUSED` proxy errors.
-
-## Component Architecture
-
-### Frontend responsibilities
-
-- UI layout and panels (`src/components/`)
-- routing and page-level state (`src/pages/`, `src/App.tsx`)
-- auth + server-backed app state via React Context (`src/lib/store.tsx`)
-- zod-validated AI output parsing (`src/lib/parse.ts`, `src/lib/ai.ts`)
-- orchestration of calls to backend endpoints (`src/lib/client.ts`)
-
-### Backend responsibilities
-
-- secret management (OpenAI key, JWT secret — env only, never sent to the browser)
-- OpenAI Responses API integration (`server/routes/generate.ts`)
-- auth: scrypt password hashing + signed JWT cookies (`server/auth.ts`)
-- server-side persistence in SQLite (`server/db.ts`)
-- request validation, rate limiting, and CORS (`server/middleware.ts`)
-
-## Architectural Pattern
-
-The project uses a thin backend proxy pattern: the browser never speaks to OpenAI directly, and the OpenAI API key lives only in the Express process.
-
-Advantages:
-
-- secrets never reach the browser
-- simpler backend environment management
-- reduced security exposure
-- single place for rate limiting and request shaping
-
-## Auth & State Model
-
-- **Accounts**: register/login with scrypt-hashed passwords. A signed JWT is stored in an httpOnly, SameSite=Lax cookie (`wl_token`, 7-day expiry).
-- **Per-user state**: each user's dashboard state (trends, ideas, scripts, calendar, etc.) is persisted in SQLite keyed by user id and synced on a 400ms debounce via `PUT /api/state`.
-- **Dev account**: a known local-development account is seeded with `npm run seed:dev` (`admin@wavelength.local` / `password123`) so the dashboard is usable immediately — see [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md).
-
-See [./DATABASE.md](./DATABASE.md) for the schema and [./API.md](./API.md) for endpoints.
-
-## Data Flow Pattern
-
-The project's main data flow is event-driven:
-
-1. the user enters a prompt or chooses a feature action
-2. the frontend calls `generateJSON()` → `POST /api/generate`
-3. the backend calls the OpenAI Responses API with `system` + `prompt` (and optionally `web_search_preview`)
-4. the model text response is returned to the client
-5. the client extracts + zod-validates the JSON and writes it into shared app state
-6. state updates trigger visible dashboard refreshes
-7. the new state is debounced and persisted to SQLite server-side
-
-## Major Code Boundaries
-
-- `src/App.tsx` — root app: routing, `StoreProvider`, and the `AuthPage` / layout switch
-- `src/lib/store.tsx` — auth + server-backed app state (React Context)
-- `src/lib/ai.ts` — `generateJSON()` with zod validation + id helpers (`uid`, `withIds`)
-- `src/lib/client.ts` — typed `fetch` wrapper (same-origin, cookie credentials)
-- `src/lib/parse.ts` — robust JSON extraction from model output
-- `src/lib/schemas.ts` — zod schemas for every AI panel
-- `src/lib/{format,icons,nav}.ts` — small UI helpers
-- `src/components/` — `Sidebar`, `TopNav`, `Chat`, `Landing`, `Upload`, `SharedUI`
-- `src/pages/` — one page per sidebar route
-- `src/styles/app.css` — design-token CSS (variables, layout, components)
-- `src/types.ts` — TypeScript interfaces for all domain data
-- `server/index.ts` — Express app, CORS, route mounting, health check
-- `server/{config,db,auth,middleware}.ts` — config, SQLite, auth, shared middleware
-- `server/routes/{auth,state,generate,youtube}.ts` — route handlers
-
-## Interaction Logic
-
-The dashboard is driven by user actions such as:
-
-- refresh trends (web search)
-- generate ideas / keywords / titles / scripts
-- track competitors (web search)
-- research a field and build a 5-video roadmap
-- generate a one-click content package (idea + thumbnail + script + sources)
-- plan and manage a content calendar
-- view the dashboard recommendations
-
-Each action typically performs the following:
-
-1. validate a user input (length / shape checks in the component)
-2. call `generateJSON()` → `POST /api/generate`
-3. parse + zod-validate the model response
-4. write the result into app state (`useAppState`)
-5. state is saved is debounced and persisted to SQLite server-side
-6. render on the dashboard
-
-## Scalability Considerations
-
-This prototype is intentionally not built for high concurrency or large-scale analytics. Scaling it would involve:
-
-- per-user database isolation (already in place via SQLite per-user `kv`)
-- auth and workspaces (present at a basic level)
-- a background job queue for AI tasks
-- per-user + per-endpoint rate limits (auth + AI limiters already exist)
-- observability and error tracking
-
-## Security Architecture
-
-The security model is minimal but sound for a local prototype:
-
-- no secrets in browser JS
-- backend owns the OpenAI API key
-- optional shared `API_TOKEN` for headless `/api/generate` calls
-- scrypt password hashing + JWT sessions in httpOnly cookies
-- restricted CORS (`CORS_ORIGIN`), rate limiting (`express-rate-limit`)
-
-## Future Architecture Direction
-
-Near-term hardening:
-
-- migrate SQLite to a connection-pooling store if multi-process concurrency is needed
-- add OAuth / YouTube Analytics API for 7-day delta analytics
-- background generation and notification jobs
-- analytics and monitoring stack (request logging, structured errors)
+```
+┌────────────────────────────────────────────────────────┐
+│                   React 18 + Vite 6 Client              │
+│  - Thumbnail Design Studio (Dynamic Text Scaling Canvas)│
+│  - 10-Framework Title Intelligence Explorer             │
+│  - Multilingual Script Assistant (Eng / Hin / Hinglish) │
+│  - AI Strategist Chat & Package Synthesizer             │
+└───────────────────────────┬────────────────────────────┘
+                            │ HTTP (Proxy / Session Cookie)
+┌───────────────────────────▼────────────────────────────┐
+│                  Express + TypeScript Server           │
+│  - Auth & Session Middleware (scrypt + JWT httpOnly)   │
+│  - SQLite Database Persistence (`better-sqlite3`)      │
+│  - Rate Limiting & Input Validation                    │
+└───────┬───────────────────┬───────────────────┬────────┘
+        │                   │                   │
+┌───────▼───────────┐ ┌─────▼───────────┐ ┌─────▼────────────┐
+│ AI Provider Engine│ │ Thumbnail Studio│ │ YouTube Research │
+│ Multi-Model Flash │ │ 2-Stage Visual  │ │ Data API v3      │
+│ Cascade (Gemini)  │ │ Spec + FLUX /   │ │ Benchmarks &     │
+│ Groq / OpenAI     │ │ Imagen 3 Render │ │ Competitors      │
+└───────────────────┘ └─────────────────┘ └──────────────────┘
+```
 
 ---
 
-Last updated: 2026-08-03
+## Key Architectural Components
+
+### 1. Multi-Model AI Cascade (`server/services/aiProvider.ts`)
+- **Primary Engine**: Google Gemini API default (`gemini-3.5-flash`).
+- **Resilience Cascade**: If a rate limit (HTTP 429) or temporary timeout occurs, requests automatically cascade across:
+  1. `gemini-3.5-flash`
+  2. `gemini-3.5-flash-lite`
+  3. `gemini-3.6-flash`
+  4. `gemini-3.7-flash`
+  5. Groq Cloud (`llama-3.3-70b-versatile`)
+  6. OpenRouter / OpenAI
+- **Strict Anti-Mock Policy**: If all configured AI providers fail, an explicit `Error` is thrown, returning an HTTP 500/502 error to the client with an actionable description. **Silent mock fallbacks are completely eliminated.**
+
+---
+
+### 2. Professional YouTube Thumbnail Design Studio (`server/services/thumbnailIntelligence.ts`)
+
+Instead of treating thumbnails as simple prompt generators, Wavelength implements a **Two-Stage Visual Strategy Pipeline**:
+
+```
+[STAGE 1: Visual Strategy & Specification Analysis]
+Input: Title / Topic / Script Context
+  ↓
+1. Content Understanding (True intent, non-literal analysis)
+2. Thumbnail Objective (1 of 12 Triggers: Curiosity, Warning, Transformation, Mystery, etc.)
+3. Visual Story & Hierarchy (1 dominant primary focal subject + 1-2 secondary items + backdrop)
+4. Composition Engine (Selects: LEFT_TEXT_RIGHT_SUBJECT, RIGHT_TEXT_LEFT_SUBJECT, SPLIT_COMPARISON, etc.)
+5. Text Strategy (1–4 punchy words, negative space zone, contrast colors)
+6. Automated QA Assessment (Checks focal point, 1-sec story immediacy, text brevity, mobile readability, non-invention)
+
+[STAGE 2: Prompt Synthesis & Clean Generative Render]
+Prompt Builder:
+  - Generates 16:9 prompt instructing the model on subject, framing, lighting, and negative space
+  - Strictly enforces: ZERO EMBEDDED TEXT OR LETTERS
+Generative Engine:
+  - Pollinations FLUX Engine (1280x720 16:9 HD JPEG)
+  - Google Imagen 3 Predict API (`imagen-3.0-generate-002`)
+
+[STAGE 3: Client-Side Dynamic Typography Overlay]
+Canvas Engine (`src/pages/ImageGeneratorPage.tsx`):
+  - Dynamic font size calculation (`clamp(24px, 5vw, 56px)` to `clamp(18px, 3.8vw, 42px)`)
+  - Multi-line word stacking (auto-splits 3-4 words across 2 balanced lines)
+  - Placed into the designated negative space zone with high-contrast text stroke, drop shadow, and backdrop pill
+```
+
+---
+
+### 3. 10-Framework Title Intelligence Engine (`server/services/titleIntelligence.ts`)
+
+Synthesizes high-CTR titles across 10 psychological frameworks:
+1. **Curiosity Gap**
+2. **Negative Contrast / Warning**
+3. **Direct Benefit / Transformation**
+4. **Speedrun / Shortcut**
+5. **Extreme Stakes / Challenge**
+6. **Identity Callout**
+7. **Secret Revelation / Forbidden**
+8. **Story / Journey**
+9. **Authority / Data-Backed**
+10. **Pattern Interrupt / Absurdity**
+
+Each title is enriched with CTR scores, virality indicators, psychological trigger explanations, and thumbnail visual pairing suggestions.
+
+---
+
+### 4. Multilingual Script Intelligence Engine (`server/services/scriptIntelligence.ts`)
+
+Generates structured YouTube scripts adhering to creator retention architecture:
+- **0–15s Hook**: Visual staging, verbal pattern interrupt, high-stakes premise.
+- **Section Breakdown**: Pacing notes, visual directions, retention spikes, and community CTAs.
+- **Language Support**: English, Hindi (Devanagari script), and creator Hinglish.
+
+---
+
+### 5. Data Persistence & Security
+
+- **Database**: SQLite via `better-sqlite3` and `node:sqlite`.
+- **Tables**:
+  - `users`: User account identity, email, name, scrypt password hash.
+  - `kv`: User-scoped JSON key-value store for dashboard preferences, saved ideas, scripts, packages, and calendar entries.
+- **Auth**: Passwords hashed with `node:crypto.scryptSync`. Tokens signed via HMAC-SHA256 JWTs stored in `httpOnly`, `SameSite=Lax` cookies.

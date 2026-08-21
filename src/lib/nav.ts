@@ -1,17 +1,10 @@
 import {
   LayoutGrid,
   Compass,
-  Wand2,
-  Radar,
-  Users,
-  Search,
-  Sparkles,
-  Type,
+  FolderGit2,
+  Layers,
   FileText,
-  CalendarDays,
-  LineChart,
-  Settings,
-  Image,
+  Clapperboard,
   User,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +15,7 @@ export interface NavItem {
   icon: LucideIcon;
   desc?: string;
   group?: string;
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -31,38 +25,25 @@ export interface NavGroup {
 
 export const navGroups: NavGroup[] = [
   {
-    label: "Overview",
+    label: "Home",
     items: [
-      { label: "Dashboard", path: "/", icon: LayoutGrid, desc: "Creator overview", group: "Navigation" },
-      { label: "AI Chat", path: "/chat", icon: Sparkles, desc: "YouTube Strategist AI", group: "Navigation" },
+      { label: "Home", path: "/", icon: LayoutGrid, desc: "Command Center & Next Move", group: "Home" },
     ],
   },
   {
-    label: "Analyze",
+    label: "Studio",
     items: [
-      { label: "Trend Discovery", path: "/trends", icon: Radar, desc: "Live viral trends", group: "Analyze" },
-      { label: "Competitor Intel", path: "/competitors", icon: Users, desc: "Channel teardowns & gaps", group: "Analyze" },
-      { label: "Keyword Research", path: "/keywords", icon: Search, desc: "High-demand search terms", group: "Analyze" },
-      { label: "Field Research", path: "/field-research", icon: Compass, desc: "5-video roadmap blueprint", group: "Analyze" },
+      { label: "Shorts Studio", path: "/shorts", icon: Clapperboard, desc: "9:16 vertical short production blueprints", group: "Studio", badge: "HOT" },
+      { label: "Thumbnail Studio", path: "/packaging", icon: Layers, desc: "10-framework titles & synchronized thumbnails", group: "Studio" },
+      { label: "Long-Form Studio", path: "/script", icon: FileText, desc: "Retention-optimized video scripts & beats", group: "Studio" },
     ],
   },
   {
-    label: "Create",
+    label: "Workspace",
     items: [
-      { label: "Idea Generator", path: "/ideas", icon: Sparkles, desc: "Viral video concepts", group: "Create" },
-      { label: "Title Generator", path: "/titles", icon: Type, desc: "Research-backed 10 frameworks", group: "Create" },
-      { label: "Script Assistant", path: "/script", icon: FileText, desc: "Multi-language creator scripts", group: "Create" },
-      { label: "Image Generator", path: "/image-generator", icon: Image, desc: "16:9 YouTube Thumbnails", group: "Create" },
-      { label: "One-Click Package", path: "/package", icon: Wand2, desc: "Idea, script & visual suite", group: "Create" },
-    ],
-  },
-  {
-    label: "Plan & System",
-    items: [
-      { label: "Content Calendar", path: "/calendar", icon: CalendarDays, desc: "Schedule uploads", group: "Plan" },
-      { label: "Analytics", path: "/analytics", icon: LineChart, desc: "Channel performance stats", group: "Plan" },
-      { label: "Creator Profile", path: "/profile", icon: User, desc: "Channel persona & brand", group: "System" },
-      { label: "Settings", path: "/settings", icon: Settings, desc: "API status & preferences", group: "System" },
+      { label: "Projects", path: "/projects", icon: FolderGit2, desc: "Unified idea & video blueprints", group: "Workspace" },
+      { label: "Research", path: "/research", icon: Compass, desc: "Keywords, gaps & audience signals", group: "Workspace" },
+      { label: "Creator Profile", path: "/profile", icon: User, desc: "Master persona, tone & channel memory", group: "Workspace" },
     ],
   },
 ];

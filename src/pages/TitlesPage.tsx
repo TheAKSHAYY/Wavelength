@@ -50,7 +50,7 @@ export default function TitlesPage() {
   const { loading, error, clearError, run } = useTask();
 
   useEffect(() => {
-    if (passedTopic && passedTopic !== topic) {
+    if (passedTopic) {
       setTopic(passedTopic);
     }
   }, [passedTopic]);
@@ -145,6 +145,10 @@ export default function TitlesPage() {
     e.stopPropagation();
     navigate("/image-generator", {
       state: {
+        title: titleItem.title,
+        topic: topic || titleItem.title,
+        angle: titleItem.angle || "viral",
+        audience: researchMeta?.audience || "viewers",
         prompt: `High-CTR YouTube thumbnail for "${titleItem.title}", angle: ${titleItem.angle || "viral"}, targeting ${
           researchMeta?.audience || "viewers"
         }`,

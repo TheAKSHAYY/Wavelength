@@ -1,182 +1,45 @@
-# Features Overview
+# Wavelength Features Overview
 
-## Executive Summary
-
-Wavelength is organized around a dashboard of creator-research functions. Each panel is designed to shorten the time between idea generation and strategic execution.
-
-## Feature Inventory
-
-### 1. Trend Discovery Panel
-
-Purpose: identify what topics are rising or attracting attention.
-
-Typical inputs:
-
-- niche or topic
-- creator subject area
-- target audience characteristics
-
-Typical outputs:
-
-- rising trends
-- momentum indicators
-- opportunity labels
-- source references
-- competitive positioning notes
-
-### 2. Competitive Intelligence Panel
-
-Purpose: understand how similar creators or content lanes are performing.
-
-Typical outputs:
-
-- competitor summaries
-- upload frequency
-- common themes
-- obvious content gaps
-- strategic suggestions
-
-### 3. Keyword Research Panel
-
-Purpose: find the language people use when searching for a topic.
-
-Typical outputs:
-
-- keyword clusters
-- intent labels
-- keyword opportunity score
-- recommended content angles
-
-### 4. Idea Generation Panel
-
-Purpose: produce a list of video concepts around a specific topic area.
-
-Typical outputs:
-
-- topic titles
-- creative angles
-- audience hooks
-- concept variation sets
-
-### 5. Title Generator
-
-Purpose: generate strong, curiosity-driven titles.
-
-Typical outputs:
-
-- title suggestions
-- reason or angle for each title
-- CTA or tension-based framing
-
-### 6. Script Generation Panel
-
-Purpose: create an outline or draft narrative for a video.
-
-Typical outputs:
-
-- hook
-- key sections
-- narrative arc
-- call to action
-- editing notes
-
-### 7. Roadmap Panel
-
-Purpose: generate a 5-video sequence that advances a creator theme over time.
-
-Typical outputs:
-
-- planned episodes
-- sequencing rationale
-- topic progression
-- audience payoff
-
-### 8. Package Generation Panel
-
-Purpose: combine multiple AI-assisted components into a single actionable content package.
-
-Typical outputs:
-
-- video concept summary
-- thumbnail direction
-- script
-- supporting sources
-- recommended next steps
-
-### 9. Recommendation Engine
-
-Purpose: supply quick tactical suggestions in the UI.
-
-Typical outputs:
-
-- action items
-- optimization notes
-- strategy recommendations
-- urgency or priority tags
-
-### 10. Content Calendar
-
-Purpose: keep content generation organized.
-
-Typical outputs:
-
-- future publishing slots
-- planned topics
-- cadence suggestions
-- timing guidance
-
-## Feature Maturity
-
-| Feature | Status |
-|---|---|
-| Trend discovery | MVP-level |
-| Competitor analysis | MVP-level |
-| Keyword research | MVP-level |
-| Idea generation | MVP-level |
-| Script generation | MVP-level |
-| Roadmap generation | MVP-level |
-| Package generation | MVP-level |
-| Recommendation engine | MVP-level |
-| Calendar planning | MVP-level |
-
-## Feature Dependencies
-
-These features depend on the backend AI proxy and prompt-based generation layer:
-
-- trend discovery
-- keyword research
-- idea generation
-- script drafting
-- roadmap generation
-- package generation
-
-## Feature Design Principles
-
-- fast and informative
-- creator-first and practical
-- text-first with visual summaries
-- AI output should be easy to edit
-- no hard lock-in to generated output
-
-## User Value by Feature
-
-- Trend discovery reduces uncertainty.
-- Competitor analysis provides context.
-- Keyword research improves topic fit.
-- Idea generation unlocks output velocity.
-- Scripts lower production friction.
-- Roadmaps improve long-term momentum.
-- Calendar planning supports consistency.
-
-## Suggested Roadmap Priorities
-
-1. Better prompt quality and structured output validation
-2. Saved projects and history
-3. Real source validation and curated references
-4. User-authenticated content workspaces
-5. Team collaboration and review workflows
-6. Database-backed persistence and analytics
+## 1. Professional YouTube Thumbnail Design Studio (`/image-generator`)
+- **Semantic Content Understanding**: Analyzes core premise, angle, and psychological triggers.
+- **12 Thumbnail Objectives**: Identifies viewer emotion (Curiosity, Warning, Transformation, Discovery, Comparison, etc.) and crafts the 1-second viewer promise.
+- **Visual Story & Dominant Focal Hierarchy**: Exactly 1 primary focal hero subject + 1–2 secondary contextual items + non-distracting authentic backdrop.
+- **6 Dynamic Composition Layouts**: `LEFT_TEXT_RIGHT_SUBJECT`, `RIGHT_TEXT_LEFT_SUBJECT`, `CENTER_SUBJECT`, `SPLIT_COMPARISON`, `TOP_TEXT_BOTTOM_SUBJECT`, `FULL_BLEED_SUBJECT_WITH_NEGATIVE_SPACE`.
+- **Dynamic Multi-Line Typography Canvas**:
+  - 1–4 punchy hook words (never duplicates the video title).
+  - Scaled dynamically (`clamp(24px, 5vw, 56px)` to `clamp(18px, 3.8vw, 42px)`).
+  - Auto-stacked onto 2 balanced lines when 3–4 words.
+  - Positioned into the negative space zone with high-contrast text strokes, drop shadows, and backdrop pills.
+- **Clean Image Generation**: Zero text embedded inside the image, rendered via Pollinations FLUX (1280x720 16:9 HD) or Google Imagen 3.
+- **Real-Time QA Diagnostics**: Evaluates focal point clarity, story immediacy, text brevity, mobile legibility, and non-inventive accuracy.
 
 ---
 
-Last updated: 2026-08-03
+## 2. 10-Framework Title Intelligence (`/titles`)
+- **Psychological Formulation**: Generates high-CTR titles across 10 distinct frameworks (Curiosity Gap, Negative Contrast, Direct Benefit, Speedrun, Extreme Stakes, Identity Callout, Secret Revelation, Story/Journey, Authority, Pattern Interrupt).
+- **Enriched Metrics**: Provides CTR scores, psychological trigger breakdowns, virality indicators, and matching thumbnail visual suggestions.
+- **Multilingual Support**: Supports English, Hindi, and Hinglish.
+
+---
+
+## 3. Multilingual Script Assistant (`/script`)
+- **Retention Architecture**: Formulates 0–15s visual & verbal hooks, section breakdowns, pacing notes, retention spikes, and community CTAs.
+- **Creator Modes**: Full script generation or structured bullet-point outline.
+- **Language Nuance**: Generates in natural English, Hindi (Devanagari script), and creator Hinglish.
+
+---
+
+## 4. Trend Discovery & Field Research (`/trends`, `/field-research`)
+- **Market Signal Aggregation**: Discovers breakout niches, search velocity, and audience sentiment.
+- **5-Video Content Roadmap**: Transforms field research and topic exploration into a structured 5-video series plan.
+
+---
+
+## 5. One-Click Content Package (`/package`)
+- Generates a synchronized video strategy package in one click: Idea $\rightarrow$ 10 Titles $\rightarrow$ Script $\rightarrow$ Thumbnail Blueprint $\rightarrow$ Live FLUX Image Render.
+
+---
+
+## 6. AI Channel Strategist Chat (`/chat`)
+- Conversational creator mentor for video packaging, competitor gap analysis, and content audits.
+- Powered by the multi-model Gemini cascade with full conversation context memory.

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  Settings,
   Menu,
   X,
 } from "lucide-react";

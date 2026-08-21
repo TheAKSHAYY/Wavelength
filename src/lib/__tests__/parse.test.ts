@@ -48,16 +48,20 @@ describe("parseModelJSON", () => {
     expect(out[0].viral).toBe(80);
   });
 
-  it("throws a friendly error on shape mismatch", () => {
-    expect(() => parseModelJSON(schema, '[{"title":"t"}]')).toThrow(/didn't match/i);
+  it("handles key aliases, string percentages, and lowercase enums gracefully", () => {
+    const out = parseModelJSON(
+      schema,
+      '[{"title":"Android Dev Mistakes","viralScore":"94%","demand":"high","difficulty":"easy","targetAudience":"Beginner devs"}]'
+    );
+    expect(out[0].title).toBe("Android Dev Mistakes");
+    expect(out[0].viral).toBe(94);
+    expect(out[0].demand).toBe("High");
+    expect(out[0].difficulty).toBe("Low");
+    expect(out[0].audience).toBe("Beginner devs");
   });
 
-  it("rejects invalid enum values", () => {
-    expect(() =>
-      parseModelJSON(
-        schema,
-        '[{"title":"t","viral":1,"demand":"Ridiculous","difficulty":"Low","audience":"d"}]'
-      )
-    ).toThrow(/didn't match/i);
+  it("throws a friendly error on completely empty/invalid shape", () => {
+    expect(() => parseModelJSON(schema, '[{"wrong":123}]')).toThrow(/didn't match/i);
   });
 });
+

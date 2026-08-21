@@ -249,3 +249,38 @@ export function formatViews(views: number): string {
   }
   return views + " views";
 }
+
+/**
+ * Fetches real-time YouTube search autocomplete suggestions.
+ * Completely free, no API key required, zero quota usage.
+ */
+export async function getYouTubeSuggestions(query: string): Promise<string[]> {
+  const clean = query.trim();
+  if (!clean) return [];
+
+  try {
+    const url = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(clean)}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as [string, string[]];
+    if (Array.isArray(data) && Array.isArray(data[1])) {
+      return data[1].slice(0, 12);
+    }
+    return [];
+  } catch (err) {
+    console.warn("YouTube suggestions fetch error:", err);
+    return [];
+  }
+}
+

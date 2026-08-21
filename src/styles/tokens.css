@@ -4,10 +4,10 @@
 
 :root,
 [data-theme="dark"] {
-  /* ---- Dark Mode Base (Obsidian Slate) ---- */
-  --color-background: #090d16;
+  /* ---- Dark Mode Base (Deep Obsidian & Luminous Slate) ---- */
+  --color-background: #080b12;
   --color-foreground: #f8fafc;
-  --color-muted: #161c2e;
+  --color-muted: #131b2e;
   --color-muted-foreground: #94a3b8;
   
   --color-accent: #6366f1;
@@ -16,25 +16,32 @@
   --color-tertiary: #38bdf8;
   --color-quaternary: #10b981;
   
-  --color-border: #1e263c;
-  --color-input: #111625;
-  --color-card: #111625;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: #0f1524;
+  --color-card: #0d121f;
   --color-ring: #6366f1;
 
-  /* Legacy re-maps */
-  --bg: #090d16;
+  /* Surfaces & Canvas */
+  --bg: #080b12;
   --text: #f8fafc;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-dim: #475569;
-  --surface: #111625;
-  --surface-2: #161c2e;
-  --surface-3: #1d253c;
-  --border: #1e263c;
-  --border-light: #2c3652;
+  --surface: #0d121f;
+  --surface-1: #0d121f;
+  --surface-2: #141b2c;
+  --surface-3: #1a243c;
+  --bg-surface-1: #0d121f;
+  --bg-surface-2: #141b2c;
+  --bg-surface-3: #1a243c;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.08);
   
-  /* Accents */
+  /* Luminous Accents */
   --accent: #6366f1;
+  --accent-primary: #6366f1;
   --accent-light: #818cf8;
   --accent-dark: #4f46e5;
   --accent-foreground: #ffffff;
@@ -42,18 +49,24 @@
   --accent-mint: #10b981;
   --accent-amber: #f59e0b;
   --accent-blue: #38bdf8;
+  --accent-purple: #a855f7;
   --accent-red: #ef4444;
   
-  --accent-glow: rgba(99, 102, 241, 0.15);
-  --accent-warm-dim: rgba(236, 72, 153, 0.12);
-  --accent-mint-dim: rgba(16, 185, 129, 0.12);
-  --accent-amber-dim: rgba(245, 158, 11, 0.12);
-  --accent-red-dim: rgba(239, 68, 68, 0.12);
-  --accent-blue-dim: rgba(56, 189, 248, 0.12);
+  --accent-glow: rgba(99, 102, 241, 0.2);
+  --accent-primary-dim: rgba(99, 102, 241, 0.2);
+  --accent-warm-dim: rgba(236, 72, 153, 0.14);
+  --accent-mint-dim: rgba(16, 185, 129, 0.14);
+  --accent-amber-dim: rgba(245, 158, 11, 0.14);
+  --accent-red-dim: rgba(239, 68, 68, 0.14);
+  --accent-blue-dim: rgba(56, 189, 248, 0.14);
+  --accent-purple-dim: rgba(168, 85, 247, 0.14);
+
+  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --card-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] {
-  /* ---- Clean Light Mode ---- */
+  /* ---- Clean Modern Light Mode ---- */
   --color-background: #f8fafc;
   --color-foreground: #0f172a;
   --color-muted: #f1f5f9;
@@ -70,15 +83,22 @@
 
   --bg: #f8fafc;
   --text: #0f172a;
+  --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
   --text-dim: #94a3b8;
   --surface: #ffffff;
+  --surface-1: #ffffff;
   --surface-2: #f1f5f9;
   --surface-3: #e2e8f0;
+  --bg-surface-1: #ffffff;
+  --bg-surface-2: #f1f5f9;
+  --bg-surface-3: #e2e8f0;
   --border: #e2e8f0;
   --border-light: #cbd5e1;
+  --border-subtle: #e2e8f0;
   --accent: #4f46e5;
+  --accent-primary: #4f46e5;
   --accent-light: #6366f1;
   --accent-dark: #4338ca;
   --accent-foreground: #ffffff;
@@ -86,13 +106,19 @@
   --accent-mint: #059669;
   --accent-amber: #d97706;
   --accent-blue: #0284c7;
+  --accent-purple: #9333ea;
   --accent-red: #dc2626;
-  --accent-glow: rgba(79, 70, 229, 0.1);
+  --accent-glow: rgba(79, 70, 229, 0.12);
+  --accent-primary-dim: rgba(79, 70, 229, 0.12);
   --accent-warm-dim: rgba(219, 39, 119, 0.08);
   --accent-mint-dim: rgba(5, 150, 105, 0.08);
   --accent-amber-dim: rgba(217, 119, 6, 0.08);
   --accent-red-dim: rgba(220, 38, 38, 0.08);
   --accent-blue-dim: rgba(2, 132, 199, 0.08);
+  --accent-purple-dim: rgba(147, 51, 234, 0.08);
+
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --card-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
 }
 
 :root {
@@ -113,9 +139,9 @@
 
   /* ---- Shadows ---- */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.35);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.45);
 
   /* ---- Transitions ---- */
   --transition-fast: 0.15s ease;

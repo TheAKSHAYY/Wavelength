@@ -104,15 +104,31 @@ export function EmptyState({ text, action }: { text: string; action?: ReactNode 
   );
 }
 
-export function ErrorBanner({ message, onRetry }: { message: string; onRetry?: () => void }) {
-  if (!message) return null;
+export function ErrorBanner({
+  message,
+  error,
+  onRetry,
+  onDismiss,
+}: {
+  message?: string;
+  error?: string;
+  onRetry?: () => void;
+  onDismiss?: () => void;
+}) {
+  const text = message || error;
+  if (!text) return null;
   return (
-    <div className="error-banner">
-      <AlertTriangle size={14} />
-      <span style={{ flex: 1 }}>{message}</span>
+    <div className="error-banner" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1 }}>{text}</span>
       {onRetry && (
         <button className="btn btn-ghost btn-sm" onClick={onRetry} style={{ color: "var(--accent-red)" }}>
           Retry
+        </button>
+      )}
+      {onDismiss && (
+        <button className="btn btn-ghost btn-sm" onClick={onDismiss} style={{ color: "var(--text-muted)", padding: "2px 6px" }}>
+          Dismiss
         </button>
       )}
     </div>
@@ -161,7 +177,7 @@ export function Pill({ children, tone = "neutral" }: { children: ReactNode; tone
   return <span className={`pill pill-${tone}`}>{children}</span>;
 }
 
-export function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -171,9 +187,11 @@ export function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      aria-label="Copy"
+      aria-label={label || "Copy"}
+      style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
     >
       {copied ? <Check size={12} color="var(--accent-mint)" /> : <Copy size={12} />}
+      {label && <span>{copied ? "Copied!" : label}</span>}
     </button>
   );
 }

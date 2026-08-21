@@ -436,7 +436,7 @@ function extractChannelName(prompt: string): string {
 }
 
 function extractSubject(prompt: string, fallback: string): string {
-  let cleaned = prompt
+  const cleaned = prompt
     .replace(/^video\s+title\/topic:\s*/i, "")
     .replace(/^video\s+topic:\s*/i, "")
     .replace(/^video\s+title:\s*/i, "")

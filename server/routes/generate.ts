@@ -1,12 +1,58 @@
 import { Router } from "express";
-import { config } from "../config.js";
 import { aiLimiter, requireAuthOrToken } from "../middleware.js";
-import { generateMockData } from "../mockData.js";
-import { synthesizeRealYouTubeResponse } from "../services/realDataSynthesizer.js";
+import { generateAICompletion } from "../services/aiProvider.js";
 import { runTitleIntelligencePipeline } from "../services/titleIntelligence.js";
 import { generateDynamicScript } from "../services/scriptIntelligence.js";
+import { runThumbnailIntelligence } from "../services/thumbnailIntelligence.js";
+import { generateShortsBlueprint } from "../services/shortsIntelligence.js";
 
 const router = Router();
+
+// Dedicated Creator-First Shorts Studio Pipeline
+router.post("/shorts-blueprint", aiLimiter, requireAuthOrToken, async (req, res) => {
+  const { topic, creatorMode, duration, language, tone, targetAudience, researchMode, ctaPreference, platform } = req.body || {};
+
+  if (!topic || typeof topic !== "string" || !topic.trim()) {
+    return res.status(400).json({ error: "Missing 'topic' in request body." });
+  }
+
+  try {
+    const blueprint = await generateShortsBlueprint({
+      topic: topic.trim(),
+      creatorMode,
+      duration,
+      language,
+      tone,
+      targetAudience,
+      researchMode,
+      ctaPreference,
+      platform,
+    });
+    return res.json(blueprint);
+  } catch (err) {
+    console.error("Shorts blueprint generation error:", err);
+    return res.status(500).json({ error: "Failed to generate Shorts blueprint." });
+  }
+});
+
+// Dedicated Research-Backed Thumbnail Intelligence Pipeline
+router.post("/thumbnail-intelligence", aiLimiter, requireAuthOrToken, async (req, res) => {
+  const { title, script, topic, stylePreset, angle, audience } = req.body || {};
+  try {
+    const result = await runThumbnailIntelligence({
+      title,
+      script,
+      topic,
+      stylePreset,
+      angle,
+      audience,
+    });
+    return res.json(result);
+  } catch (err) {
+    console.error("Thumbnail intelligence error:", err);
+    return res.status(500).json({ error: "Failed to generate thumbnail intelligence." });
+  }
+});
 
 // Dedicated Research-Backed Title Intelligence Pipeline
 router.post("/title-intelligence", aiLimiter, requireAuthOrToken, async (req, res) => {
@@ -57,7 +103,7 @@ router.post("/script", aiLimiter, requireAuthOrToken, async (req, res) => {
   }
 });
 
-// Proxies to OpenAI's /v1/responses or /v1/chat/completions endpoint.
+// Multi-provider AI generation endpoint (Gemini / Groq / OpenRouter / OpenAI / Ollama / Fallback)
 router.post("/", aiLimiter, requireAuthOrToken, async (req, res) => {
   const { system, prompt, useWebSearch } = (req.body || {}) as {
     system?: unknown;
@@ -71,72 +117,19 @@ router.post("/", aiLimiter, requireAuthOrToken, async (req, res) => {
 
   const systemStr = typeof system === "string" ? system : "";
 
-  // 1. Try OpenAI if API key is provided
-  if (config.openaiApiKey) {
-    const body: Record<string, unknown> = {
-      model: config.openaiModel || "gpt-4o-mini",
-      input: prompt,
-    };
-    if (systemStr.trim()) {
-      body.instructions = systemStr;
-    }
-    if (useWebSearch) {
-      body.tools = [{ type: "web_search_preview" }];
-    }
-
-    try {
-      const openaiRes = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.openaiApiKey}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = (await openaiRes.json()) as Record<string, unknown> & {
-        output_text?: string;
-        output?: Array<{ type: string; content?: Array<{ type: string; text?: string }> }>;
-        error?: { message?: string; type?: string; code?: string };
-      };
-
-      if (openaiRes.ok) {
-        let text = data.output_text;
-        if (!text) {
-          text = (data.output || [])
-            .filter((item) => item.type === "message")
-            .flatMap((item) => item.content || [])
-            .filter((c) => c.type === "output_text")
-            .map((c) => c.text || "")
-            .join("\n");
-        }
-        if (text && text.trim()) {
-          return res.json({ text: text.trim() });
-        }
-      } else {
-        console.warn("OpenAI API response not ok:", data.error?.message || openaiRes.status);
-      }
-    } catch (err) {
-      console.warn("OpenAI connection error:", err);
-    }
+  try {
+    const result = await generateAICompletion({
+      prompt,
+      system: systemStr,
+      useWebSearch: Boolean(useWebSearch),
+    });
+    return res.json({ text: result.text, provider: result.provider });
+  } catch (err) {
+    console.error("AI generation endpoint error:", err);
+    return res.status(500).json({ error: "Generation failed" });
   }
-
-  // 2. Real YouTube Data Synthesis (queries live YouTube API for real video stats, channels, views, CTR patterns)
-  if (config.youtubeApiKey) {
-    try {
-      const realYouTubeData = await synthesizeRealYouTubeResponse(systemStr, prompt);
-      if (realYouTubeData) {
-        return res.json({ text: realYouTubeData });
-      }
-    } catch (err) {
-      console.error("Real YouTube data synthesis error:", err);
-    }
-  }
-
-  // 3. Fallback to mock data if no live APIs succeeded
-  const mockText = generateMockData(systemStr, prompt);
-  return res.json({ text: mockText });
 });
 
 export default router;
+
 

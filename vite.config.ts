@@ -14,6 +14,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: frontendPort,
     strictPort: false,
     proxy: {

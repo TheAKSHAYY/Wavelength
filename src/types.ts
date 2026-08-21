@@ -183,8 +183,78 @@ export interface User {
   created_at?: string;
 }
 
+export type ProjectType = "Short" | "Thumbnail" | "Full Video";
+export type ProjectStatus = "Draft" | "Researching" | "Writing" | "Packaged" | "Ready to Record" | "Published";
+
+export interface ProjectPackaging {
+  recommendedTitle?: string;
+  whyRecommended?: string;
+  selectedTitle?: string;
+  titles?: Array<{ framework: string; title: string; score: number; trigger: string }>;
+  visualBlueprint?: {
+    subject: string;
+    visualMedium: string;
+    lightingScheme: string;
+    cameraFraming: string;
+    visualStyle: string;
+    environment: string;
+    emotionalTone: string;
+    composition: string;
+    colorPalette: string;
+    enginePrompt: string;
+    negativePrompt?: string;
+  };
+  renderedImageUrl?: string;
+  variants?: string[];
+  overlayText?: string;
+  overlayBadge?: string;
+}
+
+export interface ProjectResearch {
+  topic: string;
+  angle?: string;
+  summary?: string;
+  verifiedFacts?: Array<{ claim: string; source: string; status: "Verified" | "Contextual" }>;
+  contentGaps?: string[];
+  burningQuestions?: string[];
+}
+
+export interface ProjectLongForm {
+  title: string;
+  hook: string;
+  intro: string;
+  sections: Array<{ id: string; heading: string; goal: string; spokenVoiceover: string; visualCue: string }>;
+  cta: string;
+  estimatedMinutes: number;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  topic: string;
+  contentType: ProjectType;
+  status: ProjectStatus;
+  createdAt: string;
+  updatedAt: string;
+  progressPercent: number;
+  
+  targetAudience?: string;
+  language?: "English" | "Hindi" | "Hinglish";
+  tone?: string;
+  creatorMode?: ShortsCreatorMode;
+  visualStyle?: string;
+  
+  research?: ProjectResearch;
+  packaging?: ProjectPackaging;
+  longFormScript?: ProjectLongForm;
+  shorts?: ShortsBlueprintOutput[];
+}
+
 export interface AppState {
   niche: string;
+  currentProjectId?: string | null;
+  projects: Project[];
+  savedIdeas: Idea[];
   trends: Trend[];
   ideas: Idea[];
   competitors: Competitor[];
@@ -205,3 +275,117 @@ export interface VideoStat {
   views: number;
   publishedAt: string;
 }
+
+export type ShortsCreatorMode =
+  | "Personal Creator"
+  | "Educator"
+  | "Storyteller"
+  | "Commentary"
+  | "Explainer"
+  | "Experiment"
+  | "Faceless Creator"
+  | "Tutorial";
+
+export type ShortsDuration = "15s" | "30s" | "45s" | "60s";
+
+export type ShortsProductionMethod =
+  | "SHOOT YOURSELF"
+  | "SCREEN RECORD"
+  | "B-ROLL"
+  | "AI IMAGE"
+  | "AI VIDEO"
+  | "MOTION GRAPHIC"
+  | "STOCK FOOTAGE";
+
+export interface ShortsHookOption {
+  id: string;
+  hookText: string;
+  type: "Curiosity" | "Contradiction" | "Surprising Statement" | "Direct Question" | "Story Opening" | "Observation" | "Visual Hook";
+  whyItWorks: string;
+}
+
+export interface ShortsScene {
+  sceneNumber: number;
+  timeRange: string;
+  voiceover: string;
+  visual: string;
+  shotType: string;
+  productionMethod: ShortsProductionMethod;
+  onScreenText?: {
+    text: string;
+    style: "Hook Headline" | "Keyword Badge" | "Stat Callout" | "Minimal";
+    emphasisWords: string[];
+  };
+  bRollOrAsset?: string;
+  editingNote: string;
+  sfx: string;
+  musicCue: string;
+  aiImagePrompt?: string;
+  aiVideoPrompt?: string;
+}
+
+export interface ShortsBlueprintOutput {
+  topic: string;
+  platform: string;
+  strategy: {
+    contentAngle: string;
+    whyThisAngleWorks: string;
+    targetAudience: string;
+    goal: string;
+    tone: string;
+    creatorMode: ShortsCreatorMode;
+    estimatedWords: number;
+    pacing: string;
+  };
+  research?: {
+    isResearchBacked: boolean;
+    verifiedFacts: Array<{ claim: string; source: string; status: "Verified" | "Contextual" }>;
+    interpretations: Array<{ point: string; reasoning: string }>;
+    creativeHooks: string[];
+    keySources: Array<{ title: string; url?: string; publisher?: string }>;
+  };
+  hooks: {
+    options: ShortsHookOption[];
+    selectedHookId: string;
+    selectedHookText: string;
+    selectionRationale: string;
+  };
+  script: {
+    fullVoiceover: string;
+    wordCount: number;
+    estimatedSeconds: number;
+    durationFormatted: string;
+  };
+  timeline: ShortsScene[];
+  editing: {
+    pacing: string;
+    cutFrequency: string;
+    transitions: string[];
+    captionStrategy: {
+      style: "Word-by-word active bounce" | "Two-line clean sans" | "Minimal punchy keywords";
+      colorScheme: { active: string; default: string };
+      highlightKeywords: string[];
+    };
+    audioDirection: {
+      voiceStyle: string;
+      musicGenre: string;
+      musicMood: string;
+      targetBpm: number;
+      intensityCurve: string;
+      sfxList: Array<{ time: string; sfx: string; purpose: string }>;
+    };
+  };
+  production: {
+    beforeRecording: string[];
+    duringRecording: string[];
+    afterRecording: string[];
+  };
+  finalAiEditorPrompt: string;
+  qualityAssessment: {
+    humanTestPassed: boolean;
+    specificityScore: number;
+    durationAccuracy: boolean;
+    realismVerdict: string;
+  };
+}
+

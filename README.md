@@ -1,168 +1,109 @@
-# Wavelength — AI YouTube Growth Dashboard
+# Wavelength — AI YouTube Growth & Content Strategy Dashboard
 
-An AI-powered dashboard for YouTube creators: trend discovery, competitor
-intel, keyword research, video idea/title/script generation, a field-research
-→ 5-video roadmap tool, and a one-click "full content package" generator.
-Powered by OpenAI (with live web search for research-heavy panels).
+An AI-powered creator platform for YouTube creators and strategists: deep trend discovery, competitor intelligence, keyword research, psychological title generation across 10 frameworks, multilingual script drafting (English, Hindi, Hinglish), a professional **YouTube Thumbnail Design Studio**, and a complete one-click content package synthesizer.
 
-## What it is now
+Powered by a resilient **Google Gemini Multi-Model Cascade** (`gemini-3.5-flash` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.7-flash`), with support for Groq, OpenRouter, OpenAI, and live YouTube Data API benchmarks.
 
-- **React 18 + Vite 6 + TypeScript** frontend with real routing, lazy-loaded
-  pages, and a working sidebar + mobile navigation.
-- **Express + TypeScript backend** that proxies to the OpenAI Responses API.
-  Your API key lives only on the server — never sent to the browser.
-- **Real accounts**: register/login with scrypt-hashed passwords and JWT
-  sessions in httpOnly cookies.
-- **Server-side storage** in SQLite (Node's built-in `node:sqlite`, no native
-  deps) — all generated trends, ideas, scripts, and calendar entries are saved
-  per account, not in localStorage.
-- **Schema-validated AI output** (zod) — panels fail with a clear message
-  instead of rendering broken data.
-- **Optional real YouTube analytics** via the public YouTube Data API.
-- **Hardened**: restricted CORS, rate limiting, optional shared token, tests,
-  linting, typechecking, CI, and Docker deployment.
+---
 
-## Important: this needs an OpenAI *API* key, not a ChatGPT subscription
+## What Wavelength Includes
 
-A ChatGPT Plus/Go plan only works on chat.openai.com / the ChatGPT app. It
-does **not** give you API access. You need a separate account at
-platform.openai.com with its own pay-as-you-go billing.
+- **Professional YouTube Thumbnail Design Studio**:
+  - Semantic content understanding & 1-second viewer promise analysis.
+  - 12 psychological thumbnail objectives (Curiosity, Warning, Transformation, Discovery, etc.).
+  - 6 dynamic composition layouts (`LEFT_TEXT_RIGHT_SUBJECT`, `RIGHT_TEXT_LEFT_SUBJECT`, `SPLIT_COMPARISON`, etc.).
+  - High-CTR text strategy (1–4 punchy words, never duplicating the video title).
+  - Separate dynamic text overlay scaling & positioning engine on a 16:9 canvas.
+  - Zero-embedded-text image generation via Pollinations FLUX (1280x720 16:9 HD) and Google Imagen 3.
+  - Real-time automated Thumbnail QA validation (Focal point clarity, story immediacy, text brevity, mobile legibility, and non-inventive accuracy).
+- **10-Framework Title Intelligence**:
+  - Generates psychological, high-CTR titles across Curiosity Gap, Negative Contrast, Direct Benefit, Speedrun, Extreme Stakes, Identity Callout, Secret Revelation, etc., complete with CTR scores and virality triggers.
+- **Multilingual Script Intelligence**:
+  - Generates retention-optimized YouTube scripts with 0–15s hooks, pattern interrupts, retention beats, and engagement CTAs in natural English, Hindi (Devanagari), and creator Hinglish.
+- **Multi-Model AI Resilience**:
+  - Built-in multi-model fallback cascade with exponential backoff and rate-limit recovery.
+  - **Zero Silent Mock Fallbacks**: Real error states are surfaced if the AI pipeline fails rather than returning fake generic coding mock data.
+- **AI Channel Strategist Chat**:
+  - Multi-turn creator consultant for video brainstorming, packaging advice, and channel roadmapping.
+- **Full Creator Dashboard**:
+  - React 18 + Vite 6 + TypeScript frontend with lazy-loaded routes and responsive navigation.
+  - Express + TypeScript backend proxying AI requests securely.
+  - Server-side SQLite persistence (`better-sqlite3` + `node:sqlite`) for per-user settings, ideas, and content state.
+  - Authentication with scrypt-hashed passwords and secure httpOnly JWT cookies.
 
-## Setup (local dev)
+---
 
-**1. Install dependencies**
+## Setup & Quick Start
+
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-**2. Create `.env`**
+### 2. Configure Environment
 
 ```bash
 cp .env.example .env
 ```
 
-Then open `.env` and set at least:
+Open `.env` and configure your API keys:
 
-```
+```env
+# Primary AI Provider (Google Gemini Recommended)
+GEMINI_API_KEY=AIzaSy...
+GEMINI_MODEL=gemini-3.5-flash
+
+# Optional Providers
 OPENAI_API_KEY=sk-...
-JWT_SECRET=<long random string>
+GROQ_API_KEY=gsk_...
+YOUTUBE_API_KEY=AIzaSy...
+
+# Security
+JWT_SECRET=<long-random-string>
+PORT=4180
 ```
 
-Generate a `JWT_SECRET` with:
+### 3. Seed Development Account (Optional)
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+npm run seed:dev
 ```
+Creates dev login credentials: `admin@wavelength.local` / `password123`.
 
-**3. Run it**
+### 4. Run Development Servers
 
 ```bash
 npm run dev
 ```
+Starts backend server on port `4180` and Vite dev client on `http://localhost:5173`.
 
-Starts the backend (port 3001) and frontend (port 5173) together. Open
-**http://localhost:5173**, create an account, and you're in.
+---
 
-> **Want to skip registration?** Run `npm run seed:dev` to create a ready-to-sign-in
-> local account (`admin@wavelength.local` / `password123`), then sign in on the login screen.
+## Available Scripts
 
-## Available scripts
-
-| Command | What it does |
+| Command | Description |
 |---|---|
-| `npm run dev` | Backend + frontend together (local dev) |
-| `npm run dev:server` | Backend only (tsx watch) |
-| `npm run dev:client` | Frontend only (Vite) |
-| `npm run seed:dev` | Seed a dev account (email `admin@wavelength.local` / password `password123`) |
-| `npm run build` | Type-check-compiles the server and builds the client |
-| `npm run server` | Runs the compiled server from `server/dist` |
-| `npm run preview` | Serves the production client build locally |
-| `npm run typecheck` | Type-checks client + server |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
-| `npm test` | Vitest unit tests |
+| `npm run dev` | Runs backend + frontend concurrently in development mode |
+| `npm run dev:server` | Runs Express backend with live TypeScript reload (`tsx watch`) |
+| `npm run dev:client` | Runs Vite frontend client |
+| `npm run seed:dev` | Seeds a test account (`admin@wavelength.local` / `password123`) |
+| `npm test` | Runs complete Vitest test suite across all intelligence engines |
+| `npm run build` | Compiles TypeScript server and builds Vite client bundle for production |
+| `npm run server` | Starts compiled production server from `server/dist` |
+| `npm run typecheck` | Validates TypeScript types across client and server |
+| `npm run lint` | Runs ESLint |
 
-## Cost / model notes
+---
 
-- Default model is `gpt-4o-mini` — cheap and fast, good enough for most panels.
-- Web-search panels (Trend Discovery, Competitor Intel, Keyword Research,
-  Field Research, One-Click Package) use OpenAI's `web_search_preview` tool,
-  which costs a little extra per call.
-- Want higher-quality output? Set `OPENAI_MODEL=gpt-4o` in `.env`.
+## Testing & Verification Scripts
 
-## Real YouTube analytics
+- `npx tsx server/scripts/test-thumbnail-designer.ts`: Tests the 2-Stage Thumbnail Design Studio across 10 cross-domain topics + Google HQ acceptance test.
+- `npx tsx server/scripts/test-image-pipeline.ts`: Tests the 12-domain image intelligence pipeline with live image rendering.
+- `npx tsx server/scripts/verify-topics.ts`: Validates end-to-end multilingual title and script generation across English, Hindi, and Hinglish.
 
-The Analytics page shows sample data until you configure the YouTube Data API
-in `.env`:
+---
 
-- Create a public-data API key at https://console.cloud.google.com/apis/credentials
-- Enable the "YouTube Data API v3"
-- Set `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` in `.env`
+## License
 
-It then charts the all-time views of your most recent uploads. 7-day deltas
-require OAuth via the YouTube Analytics API, which is out of scope.
-
-## Deploying
-
-### Docker (recommended)
-
-```bash
-cp .env.example .env   # fill in real values first
-docker compose up -d --build
-```
-
-Open **http://localhost:8080**. The web service serves the client and proxies
-`/api` to the server service; SQLite data persists in a Docker volume.
-
-### Manual
-
-1. Build: `npm run build`
-2. Run the server: `npm run server` (with the same env vars set)
-3. Serve the `dist/` folder from any static host, pointing `/api` at the
-   server (or put it behind the same nginx/domain and proxy `/api`).
-
-## Architecture
-
-```
-server/                 Express + TypeScript backend
-  index.ts              app setup, CORS, routes
-  db.ts                 SQLite (node:sqlite) users + per-user state
-  auth.ts               scrypt hashing + JWT
-  middleware.ts         requireAuth, rate limits
-  services/             
-    titleIntelligence.ts   10-framework Title Intelligence & CTR heuristic scoring
-    scriptIntelligence.ts  Creator-grade Script Engine (English, Hinglish, Hindi)
-    youtubeResearch.ts     Live YouTube search & statistics integration
-    realDataSynthesizer.ts Real data synthesis fallback
-  routes/               auth, state, generate, gemini, chat, youtube
-src/                    React + TypeScript frontend
-  lib/store.tsx         auth + server-backed app state (Context)
-  lib/ai.ts             generateJSON() with zod validation
-  lib/schemas.ts        zod schemas for every AI panel
-  lib/parse.ts          robust JSON extraction from model output
-  pages/                Dashboard, Trends, Competitors, Keywords, Ideas, Titles,
-                        Script, ImageGenerator, Package, FieldResearch, Calendar,
-                        Analytics, Profile, Settings, Auth
-  components/           Sidebar, TopNav, Chat, Upload, SharedUI
-```
-
-## API
-
-| Route | Auth | Purpose |
-|---|---|---|
-| `POST /api/auth/register` | – | Create account (sets session cookie) |
-| `POST /api/auth/login` | – | Sign in (sets session cookie) |
-| `POST /api/auth/logout` | – | Clear session |
-| `GET /api/auth/me` | cookie | Current user profile & preferences |
-| `PUT /api/auth/profile` | cookie | Update creator persona, social links & channel details |
-| `PUT /api/auth/password` | cookie | Secure password update |
-| `GET /api/state` | cookie | Load the user's app state |
-| `PUT /api/state` | cookie | Save the user's app state |
-| `POST /api/generate` | cookie or token | Proxy to OpenAI Responses API / Real data fallback |
-| `POST /api/generate/title-intelligence` | cookie or token | 10-framework research-backed title generator |
-| `POST /api/generate/script` | cookie or token | Creator-grade script engine (English/Hinglish/Hindi) |
-| `POST /api/gemini/generate-image` | cookie or token | 16:9 YouTube Thumbnail Generator (Gemini/Imagen) |
-| `POST /api/chat` | cookie or token | Conversational YouTube strategist chat |
-| `GET /api/youtube/analytics` | cookie | Real view counts (optional) |
-| `GET /api/health` | – | Health check |
+MIT

@@ -21,6 +21,8 @@ html {
 
 body {
   background: var(--bg);
+  background-image: radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body);
   font-size: 13.5px;
@@ -447,6 +449,7 @@ a {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--card-highlight), var(--card-shadow);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   box-sizing: border-box;
   max-width: 100%;
@@ -462,8 +465,8 @@ a {
 }
 
 .card-interactive:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  box-shadow: var(--card-highlight), var(--shadow-lg);
+  transform: translateY(-2px);
   border-color: var(--accent);
 }
 

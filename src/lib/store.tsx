@@ -10,10 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { api } from "./client";
-import type { AppState, User } from "../types";
+import type { AppState, User, Project, ProjectType, Idea } from "../types";
 
 export const DEFAULT_STATE: AppState = {
   niche: "coding, software development and CS student content on YouTube",
+  currentProjectId: null,
+  projects: [],
+  savedIdeas: [],
   trends: [],
   ideas: [],
   competitors: [],
@@ -33,12 +36,20 @@ type StatePatch =
   | Partial<AppState>
   | ((prev: AppState) => AppState);
 
-interface Store {
+export interface Store {
   user: User | null;
   booting: boolean;
   ready: boolean;
   state: AppState;
+  activeProject: Project | null;
   setState: (patch: StatePatch) => void;
+  createProject: (data: Partial<Project> & { title: string; contentType?: ProjectType }) => Project;
+  updateProject: (id: string, patch: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+  duplicateProject: (id: string) => Project | null;
+  setCurrentProject: (id: string | null) => void;
+  saveIdea: (idea: Idea) => void;
+  removeSavedIdea: (id: string) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,7 +60,12 @@ interface Store {
 const StoreCtx = createContext<Store | null>(null);
 
 function mergeState(stored: Partial<AppState>): AppState {
-  return { ...DEFAULT_STATE, ...stored };
+  return {
+    ...DEFAULT_STATE,
+    ...stored,
+    projects: Array.isArray(stored?.projects) ? stored.projects : [],
+    savedIdeas: Array.isArray(stored?.savedIdeas) ? stored.savedIdeas : [],
+  };
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -173,20 +189,168 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setStateState(DEFAULT_STATE);
   }, []);
 
+  const createProject = useCallback(
+    (data: Partial<Project> & { title: string; contentType?: ProjectType }): Project => {
+      const now = new Date().toISOString();
+      const newProj: Project = {
+        contentType: "Short",
+        status: "Draft",
+        progressPercent: 15,
+        targetAudience: user?.target_audience || "YouTube Viewers",
+        language: "English",
+        tone: user?.tone || "Direct & Punchy",
+        creatorMode: "Educator",
+        visualStyle: "Cinematic & High-Contrast",
+        ...data,
+        id: `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        title: data.title.trim(),
+        topic: data.topic?.trim() || data.title.trim(),
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        projects: [newProj, ...(prev.projects || [])],
+        currentProjectId: newProj.id,
+      }));
+
+      return newProj;
+    },
+    [setState, user]
+  );
+
+  const updateProject = useCallback(
+    (id: string, patch: Partial<Project>) => {
+      const now = new Date().toISOString();
+      setState((prev) => {
+        const updated = (prev.projects || []).map((p) => {
+          if (p.id !== id) return p;
+          return {
+            ...p,
+            ...patch,
+            updatedAt: now,
+          };
+        });
+        return { ...prev, projects: updated };
+      });
+    },
+    [setState]
+  );
+
+  const deleteProject = useCallback(
+    (id: string) => {
+      setState((prev) => ({
+        ...prev,
+        projects: (prev.projects || []).filter((p) => p.id !== id),
+        currentProjectId: prev.currentProjectId === id ? null : prev.currentProjectId,
+      }));
+    },
+    [setState]
+  );
+
+  const duplicateProject = useCallback(
+    (id: string): Project | null => {
+      const target = (state.projects || []).find((p) => p.id === id);
+      if (!target) return null;
+      const now = new Date().toISOString();
+      const clone: Project = {
+        ...target,
+        id: `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        title: `${target.title} (Copy)`,
+        createdAt: now,
+        updatedAt: now,
+        status: "Draft",
+      };
+      setState((prev) => ({
+        ...prev,
+        projects: [clone, ...(prev.projects || [])],
+        currentProjectId: clone.id,
+      }));
+      return clone;
+    },
+    [state.projects, setState]
+  );
+
+  const setCurrentProject = useCallback(
+    (id: string | null) => {
+      setState((prev) => ({ ...prev, currentProjectId: id }));
+    },
+    [setState]
+  );
+
+  const saveIdea = useCallback(
+    (idea: Idea) => {
+      setState((prev) => {
+        const exists = (prev.savedIdeas || []).some(
+          (i) => i.id === idea.id || i.title.toLowerCase() === idea.title.toLowerCase()
+        );
+        if (exists) return prev;
+        return {
+          ...prev,
+          savedIdeas: [idea, ...(prev.savedIdeas || [])],
+        };
+      });
+    },
+    [setState]
+  );
+
+  const removeSavedIdea = useCallback(
+    (id: string) => {
+      setState((prev) => ({
+        ...prev,
+        savedIdeas: (prev.savedIdeas || []).filter((i) => i.id !== id),
+      }));
+    },
+    [setState]
+  );
+
+  const activeProject = useMemo(() => {
+    if (!state.currentProjectId) return state.projects?.[0] || null;
+    return state.projects?.find((p) => p.id === state.currentProjectId) || state.projects?.[0] || null;
+  }, [state.currentProjectId, state.projects]);
+
   const value = useMemo<Store>(
     () => ({
       user,
       booting,
       ready,
       state,
+      activeProject,
       setState,
+      createProject,
+      updateProject,
+      deleteProject,
+      duplicateProject,
+      setCurrentProject,
+      saveIdea,
+      removeSavedIdea,
       login,
       register,
       logout,
       updateProfile,
       updatePassword,
     }),
-    [user, booting, ready, state, setState, login, register, logout, updateProfile, updatePassword]
+    [
+      user,
+      booting,
+      ready,
+      state,
+      activeProject,
+      setState,
+      createProject,
+      updateProject,
+      deleteProject,
+      duplicateProject,
+      setCurrentProject,
+      saveIdea,
+      removeSavedIdea,
+      login,
+      register,
+      logout,
+      updateProfile,
+      updatePassword,
+    ]
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

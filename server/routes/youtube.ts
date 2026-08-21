@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { config } from "../config.js";
 import { requireAuth } from "../middleware.js";
+import { getYouTubeSuggestions } from "../services/youtubeResearch.js";
 
 const router = Router();
 
@@ -9,6 +10,22 @@ interface VideoStats {
   views: number;
   publishedAt: string;
 }
+
+// Real-time YouTube Search Autocomplete Suggestions (100% Free, No quota used)
+router.get("/suggest", async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q : "";
+  if (!query.trim()) {
+    return res.json({ suggestions: [] });
+  }
+
+  try {
+    const suggestions = await getYouTubeSuggestions(query);
+    return res.json({ suggestions });
+  } catch (err) {
+    console.warn("YouTube suggest error:", err);
+    return res.json({ suggestions: [] });
+  }
+});
 
 // Fetches real (public) per-video lifetime view counts for the configured
 // channel. If no YOUTUBE_API_KEY / YOUTUBE_CHANNEL_ID are set, the client
@@ -76,3 +93,4 @@ router.get("/analytics", requireAuth, async (_req, res) => {
 });
 
 export default router;
+
