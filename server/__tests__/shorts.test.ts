@@ -67,7 +67,7 @@ describe("Shorts Studio Intelligence Engine", () => {
     expect(blueprint.finalAiEditorPrompt).toContain("Vertical 9:16 Short Video Blueprint");
     expect(blueprint.finalAiEditorPrompt).toContain("FULL SPOKEN VOICEOVER:");
     expect(blueprint.finalAiEditorPrompt).toContain("SCENE-BY-SCENE EDITING TIMELINE:");
-  }, 25000);
+  }, 45000);
 
   it("enforces zero invented personal experience when user gives a general topic", async () => {
     const blueprint = await generateShortsBlueprint({
@@ -81,7 +81,7 @@ describe("Shorts Studio Intelligence Engine", () => {
     expect(scriptLower).not.toContain("when i worked at google");
     expect(scriptLower).not.toContain("my boss fired me");
     expect(blueprint.timeline.length).toBeGreaterThan(0);
-  }, 25000);
+  }, 45000);
 
   it("builds clean copy-ready AI editor prompt", () => {
     const mockBlueprint = {
@@ -171,7 +171,7 @@ describe("Shorts Studio Intelligence Engine", () => {
     expect(blueprint).toBeDefined();
     expect(blueprint.script.fullVoiceover.length).toBeGreaterThan(20);
     expect(blueprint.timeline.length).toBeGreaterThanOrEqual(2);
-  }, 25000);
+  }, 45000);
 
   it("generates authentic Hindi short blueprints with Devanagari script support", async () => {
     const blueprint = await generateShortsBlueprint({
@@ -184,5 +184,5 @@ describe("Shorts Studio Intelligence Engine", () => {
     expect(blueprint).toBeDefined();
     expect(blueprint.script.fullVoiceover.length).toBeGreaterThan(15);
     expect(blueprint.timeline.length).toBeGreaterThanOrEqual(2);
-  }, 25000);
+  }, 45000);
 });

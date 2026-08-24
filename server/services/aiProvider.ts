@@ -7,6 +7,7 @@ export interface AICompletionOptions {
   temperature?: number;
   maxTokens?: number;
   useWebSearch?: boolean;
+  jsonMode?: boolean;
 }
 
 export interface AICompletionResult {
@@ -16,23 +17,26 @@ export interface AICompletionResult {
 }
 
 /**
- * Multi-model cascade for Gemini to handle temporary demand/rate-limit spikes
+ * Multi-model cascade for Gemini to handle temporary demand/rate-limit spikes.
+ * Prioritizes ultra-fast lightweight models with highest availability.
  */
 const GEMINI_MODELS_CASCADE = [
-  "gemini-3.5-flash",
   "gemini-3.5-flash-lite",
+  "gemini-flash-lite-latest",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-latest",
   "gemini-3.6-flash",
   "gemini-3.7-flash",
 ];
 
 /**
- * Call Google Gemini API with automatic model cascade
+ * Call Google Gemini API with automatic model cascade and optional native JSON / Search Grounding
  */
 async function callGemini(options: AICompletionOptions): Promise<{ text: string; model: string } | null> {
   if (!config.geminiApiKey) return null;
 
   const modelsToTry = Array.from(
-    new Set([config.geminiModel || "gemini-3.5-flash", ...GEMINI_MODELS_CASCADE])
+    new Set([config.geminiModel || "gemini-3.5-flash-lite", ...GEMINI_MODELS_CASCADE])
   );
 
   const systemPart = options.system ? `${options.system}\n\n` : "";
@@ -41,7 +45,20 @@ async function callGemini(options: AICompletionOptions): Promise<{ text: string;
   for (const model of modelsToTry) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 12000);
+
+      const requestBody: Record<string, any> = {
+        contents: [{ role: "user", parts: [{ text: fullText }] }],
+        generationConfig: {
+          temperature: options.temperature ?? 0.7,
+          maxOutputTokens: options.maxTokens ?? 3500,
+          ...(options.jsonMode ? { responseMimeType: "application/json" } : {}),
+        },
+      };
+
+      if (options.useWebSearch) {
+        requestBody.tools = [{ google_search: {} }];
+      }
 
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -50,13 +67,7 @@ async function callGemini(options: AICompletionOptions): Promise<{ text: string;
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: fullText }] }],
-            generationConfig: {
-              temperature: options.temperature ?? 0.7,
-              maxOutputTokens: options.maxTokens ?? 3000,
-            },
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         }
       );
@@ -64,11 +75,8 @@ async function callGemini(options: AICompletionOptions): Promise<{ text: string;
 
       if (!resp.ok) {
         const errText = await resp.text();
-        console.warn(`Gemini API [${model}] returned error status ${resp.status}:`, errText.slice(0, 180));
-        if (resp.status === 429) {
-          await new Promise((r) => setTimeout(r, 800));
-        }
-        continue; // Try next model in cascade
+        console.warn(`Gemini API [${model}] status ${resp.status}:`, errText.slice(0, 120));
+        continue; // Immediately failover to next model in cascade
       }
 
       const data = (await resp.json()) as {
@@ -106,7 +114,18 @@ async function callGroq(options: AICompletionOptions): Promise<string | null> {
     messages.push({ role: "user", content: options.prompt.trim() });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 14000);
+
+    const reqBody: Record<string, any> = {
+      model: config.groqModel || "llama-3.3-70b-versatile",
+      messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2048,
+    };
+
+    if (options.jsonMode) {
+      reqBody.response_format = { type: "json_object" };
+    }
 
     const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -114,12 +133,7 @@ async function callGroq(options: AICompletionOptions): Promise<string | null> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.groqApiKey}`,
       },
-      body: JSON.stringify({
-        model: config.groqModel || "llama-3.3-70b-versatile",
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 2048,
-      }),
+      body: JSON.stringify(reqBody),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -157,6 +171,17 @@ async function callOpenRouter(options: AICompletionOptions): Promise<string | nu
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
+    const reqBody: Record<string, any> = {
+      model: config.openrouterModel || "meta-llama/llama-3.3-70b-instruct:free",
+      messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2048,
+    };
+
+    if (options.jsonMode) {
+      reqBody.response_format = { type: "json_object" };
+    }
+
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -165,12 +190,7 @@ async function callOpenRouter(options: AICompletionOptions): Promise<string | nu
         "HTTP-Referer": "http://localhost:5173",
         "X-Title": "Wavelength YouTube Dashboard",
       },
-      body: JSON.stringify({
-        model: config.openrouterModel || "meta-llama/llama-3.3-70b-instruct:free",
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 2048,
-      }),
+      body: JSON.stringify(reqBody),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -220,15 +240,21 @@ async function callOpenAICompatible(options: AICompletionOptions): Promise<strin
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 18000);
 
+    const reqBody: Record<string, any> = {
+      model: config.openaiModel || "gpt-4o-mini",
+      messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2048,
+    };
+
+    if (options.jsonMode) {
+      reqBody.response_format = { type: "json_object" };
+    }
+
     const resp = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        model: config.openaiModel || "gpt-4o-mini",
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 2048,
-      }),
+      body: JSON.stringify(reqBody),
       signal: controller.signal,
     });
     clearTimeout(timeout);

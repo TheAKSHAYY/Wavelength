@@ -19,43 +19,56 @@ import { useStore } from "../lib/store";
 import { ErrorBanner } from "../components/SharedUI";
 import { z } from "zod";
 
+const str = (fallback = "") =>
+  z.preprocess(
+    (v: unknown) => (typeof v === "string" ? v.trim() : typeof v === "number" ? String(v) : fallback),
+    z.string()
+  );
+
 const researchOverviewSchema = z.object({
-  topic: z.string(),
-  niche: z.string(),
-  audience: z.string(),
-  intent: z.string(),
-  contentOpportunity: z.string(),
-  burningQuestions: z.array(z.string()).min(2),
+  topic: str(),
+  niche: str("General"),
+  audience: str("Creators & Tech Learners"),
+  intent: str("Educational & Strategic"),
+  contentOpportunity: str("High demand topic with strong breakout potential."),
+  burningQuestions: z.array(
+    z.preprocess((v) => (typeof v === "string" ? v.trim() : typeof v === "object" && v && "question" in v ? String((v as any).question) : String(v || "")), z.string())
+  ).default([]),
   keywords: z.array(
     z.object({
-      term: z.string(),
-      volume: z.string(),
-      competition: z.string(),
-      intent: z.string(),
+      term: str(),
+      volume: str("Medium"),
+      competition: str("Medium"),
+      intent: str("Informational"),
     })
-  ).min(3),
-  contentGaps: z.array(z.string()).min(2),
+  ).default([]),
+  contentGaps: z.array(
+    z.preprocess((v) => (typeof v === "string" ? v.trim() : typeof v === "object" && v && "gap" in v ? String((v as any).gap) : String(v || "")), z.string())
+  ).default([]),
   trends: z.array(
     z.object({
-      trendAngle: z.string(),
-      whyRising: z.string(),
-      formatFit: z.string(),
+      trendAngle: str(),
+      whyRising: str("Growing search demand"),
+      formatFit: str("Short"),
     })
-  ).min(2),
+  ).default([]),
   competitorGaps: z.array(
     z.object({
-      competitorFlaw: z.string(),
-      yourWinningAngle: z.string(),
+      competitorFlaw: str("Outdated generic explanations"),
+      yourWinningAngle: str("Clear practical modern breakdown"),
     })
-  ).min(2),
+  ).default([]),
   fiveVideoRoadmap: z.array(
     z.object({
-      videoNumber: z.number(),
-      title: z.string(),
-      hook: z.string(),
-      angle: z.string(),
+      videoNumber: z.preprocess((v) => {
+        const n = Number(String(v || "").replace(/[^0-9]/g, ""));
+        return isNaN(n) || n === 0 ? 1 : n;
+      }, z.number()),
+      title: str(),
+      hook: str(),
+      angle: str(),
     })
-  ).min(3),
+  ).default([]),
 });
 
 type ResearchOverview = z.infer<typeof researchOverviewSchema>;

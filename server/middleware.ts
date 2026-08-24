@@ -27,13 +27,13 @@ export const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.wl_token as string | undefined;
   const payload = token ? verifyToken(token) : null;
   if (!payload) {
     return res.status(401).json({ error: "Authentication required." });
   }
-  const user = findUserById(payload.sub);
+  const user = await findUserById(payload.sub);
   if (!user) {
     return res.status(401).json({ error: "User no longer exists." });
   }

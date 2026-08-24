@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { createUser, findUserByEmail, updateUserPassword } from "./db.js";
 import { hashPassword } from "./auth.js";
 
 /**
@@ -19,20 +19,25 @@ import { hashPassword } from "./auth.js";
 const DEV_EMAIL = "admin@wavelength.local";
 const DEV_PASSWORD = "password123";
 
-db.prepare(
-  `INSERT INTO users (id, email, name, password_hash)
-   VALUES (?, ?, ?, ?)
-   ON CONFLICT(email) DO UPDATE SET name = excluded.name, password_hash = excluded.password_hash`
-).run(randomUUID().toString(), DEV_EMAIL, "Wavelength Dev", hashPassword(DEV_PASSWORD));
-
-const row = db.prepare("SELECT id, email, name FROM users WHERE email = ?").get(
-  DEV_EMAIL
-) as { id: string; email: string; name: string } | undefined;
-
-if (!row) {
-  console.error("Failed to seed dev account.");
-  process.exit(1);
+async function main() {
+  const existing = await findUserByEmail(DEV_EMAIL);
+  if (existing) {
+    await updateUserPassword(existing.id, hashPassword(DEV_PASSWORD));
+    console.log(`Dev account updated → ${DEV_EMAIL}`);
+  } else {
+    await createUser({
+      id: randomUUID(),
+      email: DEV_EMAIL,
+      name: "Wavelength Dev",
+      password_hash: hashPassword(DEV_PASSWORD),
+    });
+    console.log(`Dev account created → ${DEV_EMAIL}`);
+  }
+  console.log(`Sign in with: email ${DEV_EMAIL} / password ${DEV_PASSWORD}`);
 }
 
-console.log(`Dev account ready → ${row.email}`);
-console.log(`Sign in with: email ${DEV_EMAIL} / password ${DEV_PASSWORD}`);
+main().catch((err) => {
+  console.error("Failed to seed dev account:", err);
+  process.exit(1);
+});
+

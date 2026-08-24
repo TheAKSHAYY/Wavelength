@@ -49,50 +49,63 @@ function publicUser(user: UserRow | { id: string; email: string; name: string })
 
 const router = Router();
 
-router.post("/register", authLimiter, (req, res) => {
-  const { email, password, name } = (req.body || {}) as {
-    email?: unknown;
-    password?: unknown;
-    name?: unknown;
-  };
+router.post("/register", authLimiter, async (req, res) => {
+  try {
+    const { email, password, name } = (req.body || {}) as {
+      email?: unknown;
+      password?: unknown;
+      name?: unknown;
+    };
 
-  const cleanEmail = String(email ?? "").trim().toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleanEmail)) {
-    return res.status(400).json({ error: "A valid email is required." });
-  }
-  if (typeof password !== "string" || password.length < 8) {
-    return res.status(400).json({ error: "Password must be at least 8 characters." });
-  }
-  if (findUserByEmail(cleanEmail)) {
-    return res.status(409).json({ error: "An account with that email already exists." });
-  }
+    const cleanEmail = String(email ?? "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleanEmail)) {
+      return res.status(400).json({ error: "A valid email is required." });
+    }
+    if (typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters." });
+    }
+    const existing = await findUserByEmail(cleanEmail);
+    if (existing) {
+      return res.status(409).json({ error: "An account with that email already exists." });
+    }
 
-  const cleanName = String(name ?? "").trim().slice(0, 60) || "creator";
-  const user = {
-    id: randomUUID(),
-    email: cleanEmail,
-    name: cleanName,
-    avatar_color: "#6366f1",
-  };
-  createUser({ ...user, password_hash: hashPassword(password) });
-  setTokenCookie(res, signToken(user));
-  const created = findUserById(user.id);
-  return res.status(201).json({ user: publicUser(created || user) });
+    const cleanName = String(name ?? "").trim().slice(0, 60) || "creator";
+    const user = {
+      id: randomUUID(),
+      email: cleanEmail,
+      name: cleanName,
+      avatar_color: "#6366f1",
+    };
+    await createUser({ ...user, password_hash: hashPassword(password) });
+    setTokenCookie(res, signToken(user));
+    const created = await findUserById(user.id);
+    return res.status(201).json({ user: publicUser(created || user) });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Registration failed";
+    console.error("Register error:", err);
+    return res.status(500).json({ error: message });
+  }
 });
 
-router.post("/login", authLimiter, (req, res) => {
-  const { email, password } = (req.body || {}) as {
-    email?: unknown;
-    password?: unknown;
-  };
-  const cleanEmail = String(email ?? "").trim().toLowerCase();
-  const user = findUserByEmail(cleanEmail);
-  if (!user || !verifyPassword(String(password ?? ""), user.password_hash)) {
-    return res.status(401).json({ error: "Invalid email or password." });
+router.post("/login", authLimiter, async (req, res) => {
+  try {
+    const { email, password } = (req.body || {}) as {
+      email?: unknown;
+      password?: unknown;
+    };
+    const cleanEmail = String(email ?? "").trim().toLowerCase();
+    const user = await findUserByEmail(cleanEmail);
+    if (!user || !verifyPassword(String(password ?? ""), user.password_hash)) {
+      return res.status(401).json({ error: "Invalid email or password." });
+    }
+    const safe = { id: user.id, email: user.email, name: user.name };
+    setTokenCookie(res, signToken(safe));
+    return res.json({ user: publicUser(user) });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Login failed";
+    console.error("Login error:", err);
+    return res.status(500).json({ error: message });
   }
-  const safe = { id: user.id, email: user.email, name: user.name };
-  setTokenCookie(res, signToken(safe));
-  return res.json({ user: publicUser(user) });
 });
 
 router.post("/logout", (_req, res) => {
@@ -100,20 +113,20 @@ router.post("/logout", (_req, res) => {
   return res.json({ ok: true });
 });
 
-router.get("/me", (req, res) => {
+router.get("/me", async (req, res) => {
   const token = req.cookies?.[COOKIE] as string | undefined;
   const payload = token ? verifyToken(token) : null;
   if (!payload) {
     return res.status(401).json({ error: "Not logged in." });
   }
-  const user = findUserById(payload.sub);
+  const user = await findUserById(payload.sub);
   if (!user) {
     return res.status(401).json({ error: "User no longer exists." });
   }
   return res.json({ user: publicUser(user) });
 });
 
-router.put("/profile", (req, res) => {
+router.put("/profile", async (req, res) => {
   const token = req.cookies?.[COOKIE] as string | undefined;
   const payload = token ? verifyToken(token) : null;
   if (!payload) {
@@ -135,7 +148,7 @@ router.put("/profile", (req, res) => {
     social_links,
   } = (req.body || {}) as Record<string, unknown>;
 
-  const updated = updateUserProfile(payload.sub, {
+  const updated = await updateUserProfile(payload.sub, {
     name: name !== undefined ? String(name) : undefined,
     channel_name: channel_name !== undefined ? String(channel_name) : undefined,
     handle: handle !== undefined ? String(handle) : undefined,
@@ -157,7 +170,7 @@ router.put("/profile", (req, res) => {
   return res.json({ user: publicUser(updated) });
 });
 
-router.put("/password", (req, res) => {
+router.put("/password", async (req, res) => {
   const token = req.cookies?.[COOKIE] as string | undefined;
   const payload = token ? verifyToken(token) : null;
   if (!payload) {
@@ -176,7 +189,7 @@ router.put("/password", (req, res) => {
     return res.status(400).json({ error: "New password must be at least 8 characters." });
   }
 
-  const user = findUserById(payload.sub);
+  const user = await findUserById(payload.sub);
   if (!user) {
     return res.status(404).json({ error: "User not found." });
   }
@@ -185,7 +198,7 @@ router.put("/password", (req, res) => {
     return res.status(400).json({ error: "Incorrect current password." });
   }
 
-  updateUserPassword(user.id, hashPassword(newPassword));
+  await updateUserPassword(user.id, hashPassword(newPassword));
   return res.json({ ok: true, message: "Password updated successfully." });
 });
 

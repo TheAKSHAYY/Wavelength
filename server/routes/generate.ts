@@ -118,10 +118,12 @@ router.post("/", aiLimiter, requireAuthOrToken, async (req, res) => {
   const systemStr = typeof system === "string" ? system : "";
 
   try {
+    const wantsJson = systemStr.toLowerCase().includes("json") || prompt.toLowerCase().includes("json");
     const result = await generateAICompletion({
       prompt,
       system: systemStr,
       useWebSearch: Boolean(useWebSearch),
+      jsonMode: wantsJson,
     });
     return res.json({ text: result.text, provider: result.provider });
   } catch (err) {

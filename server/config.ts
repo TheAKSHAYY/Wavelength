@@ -37,6 +37,12 @@ export const config = {
   dbPath: process.env.DB_PATH || "./data/wavelength.db",
   youtubeApiKey: process.env.YOUTUBE_API_KEY || "",
   youtubeChannelId: process.env.YOUTUBE_CHANNEL_ID || "",
+  supabaseUrl: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "",
+  supabaseKey:
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    "",
   cookieSecure: process.env.COOKIE_SECURE === "true",
   isProduction: process.env.NODE_ENV === "production",
 };

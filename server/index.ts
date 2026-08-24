@@ -46,20 +46,25 @@ if (config.isProduction && config.jwtSecret === "dev-only-secret-change-me") {
   );
 }
 
-app.listen(config.port, "0.0.0.0", () => {
-  console.log(`Wavelength backend running at http://localhost:${config.port}`);
-  const activeProviders = [
-    config.geminiApiKey && "Google Gemini",
-    config.groqApiKey && "Groq Cloud",
-    config.openrouterApiKey && "OpenRouter",
-    config.openaiApiKey && "OpenAI",
-    config.youtubeApiKey && "YouTube Data API",
-  ].filter(Boolean);
+export { app };
+export default app;
 
-  if (activeProviders.length > 0) {
-    console.log(`Active API Providers: ${activeProviders.join(", ")}`);
-  } else {
-    console.log("Running in offline zero-key mode with local research synthesis & Pollinations FLUX engine.");
-  }
-});
+if (!process.env.VERCEL) {
+  app.listen(config.port, "0.0.0.0", () => {
+    console.log(`Wavelength backend running at http://localhost:${config.port}`);
+    const activeProviders = [
+      config.geminiApiKey && "Google Gemini",
+      config.groqApiKey && "Groq Cloud",
+      config.openrouterApiKey && "OpenRouter",
+      config.openaiApiKey && "OpenAI",
+      config.youtubeApiKey && "YouTube Data API",
+    ].filter(Boolean);
+
+    if (activeProviders.length > 0) {
+      console.log(`Active API Providers: ${activeProviders.join(", ")}`);
+    } else {
+      console.log("Running in offline zero-key mode with local research synthesis & Pollinations FLUX engine.");
+    }
+  });
+}
 

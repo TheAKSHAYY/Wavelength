@@ -205,6 +205,8 @@ CRITICAL RULES:
     prompt: userPrompt,
     temperature: 0.7,
     maxTokens: 4000,
+    jsonMode: true,
+    useWebSearch: Boolean(research?.researchStatus === "Research-backed"),
   });
 
   const rawText = aiResult.text.replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();
@@ -227,11 +229,24 @@ CRITICAL RULES:
     }
   }
 
-  if (!parsed || !Array.isArray(parsed.titles) || parsed.titles.length === 0) {
+  const rawList = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed?.titles)
+    ? parsed.titles
+    : Array.isArray(parsed?.titleCandidates)
+    ? parsed.titleCandidates
+    : Array.isArray(parsed?.candidates)
+    ? parsed.candidates
+    : Array.isArray(parsed?.results)
+    ? parsed.results
+    : [];
+
+  if (rawList.length === 0) {
     throw new Error("AI did not return a valid titles array.");
   }
 
-  const validatedTitles: TitleCandidate[] = parsed.titles.map((t: any, idx: number) => {
+  const validatedTitles: TitleCandidate[] = rawList.map((t: any, idx: number) => {
+    const titleText = typeof t === "string" ? t : (t.title || t.name || t.text || "");
     const score = typeof t.score === "number" ? Math.min(98, Math.max(70, t.score)) : 90 - idx * 2;
     const ctrPotential =
       t.ctrPotential && ["Very High", "High", "Medium", "Low"].includes(t.ctrPotential)
@@ -246,7 +261,7 @@ CRITICAL RULES:
 
     return {
       rank: idx + 1,
-      title: String(t.title || `Mastering ${semantic.cleanSubject}`).trim(),
+      title: String(titleText || `Mastering ${semantic.cleanSubject}`).trim(),
       angle: String(t.angle || "Core Guide").trim(),
       ctrPotential,
       score,

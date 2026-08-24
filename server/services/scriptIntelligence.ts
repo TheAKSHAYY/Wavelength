@@ -209,6 +209,7 @@ CRITICAL RULES:
     prompt: userPrompt,
     temperature: 0.7,
     maxTokens: 6000,
+    jsonMode: true,
   });
 
   const rawText = aiResult.text.replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();

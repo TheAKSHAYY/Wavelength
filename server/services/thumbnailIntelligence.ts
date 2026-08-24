@@ -506,6 +506,7 @@ Output ONLY valid JSON adhering strictly to this schema:
     prompt: userPrompt,
     temperature: 0.6,
     maxTokens: 3500,
+    jsonMode: true,
   });
 
   if (!aiResult || !aiResult.text) {
@@ -625,7 +626,10 @@ Output ONLY valid JSON adhering strictly to this schema:
   const avoidList: string[] = Array.isArray(parsed.avoid) ? parsed.avoid : [];
   sanitizeVisualRelevance(visualStory, `${title} ${topic}`, avoidList);
 
-  const visualMedium = parsed.blueprint?.visualMedium || deriveDomainVisualMedium(rawTarget);
+  let visualMedium = parsed.blueprint?.visualMedium;
+  if (!visualMedium || visualMedium.length < 5 || visualMedium.toLowerCase().includes("generic") || visualMedium.toLowerCase().includes("stock")) {
+    visualMedium = deriveDomainVisualMedium(rawTarget);
+  }
   const lightingScheme = parsed.blueprint?.lightingScheme || `Directional rim lighting with bold color harmony (${colorDirection.primary} and ${colorDirection.accent})`;
   const cameraFraming = parsed.blueprint?.cameraFraming || "Cinematic wide perspective with shallow depth of field";
   const visualStyle = parsed.blueprint?.visualStyle || "High dynamic range, crisp focal clarity, cinematic depth";
