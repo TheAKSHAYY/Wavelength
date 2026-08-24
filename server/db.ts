@@ -1,8 +1,25 @@
-import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "./config.js";
+
+// Lazy SQLite loader — node:sqlite is only available in Node.js >= 22.5.
+// On Vercel (Node 20) we use Supabase; SQLite is only used locally.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let DatabaseSync: any = null;
+function getSqliteClass() {
+  if (!DatabaseSync) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      DatabaseSync = require("node:sqlite").DatabaseSync;
+    } catch {
+      throw new Error(
+        "node:sqlite is not available in this Node.js version. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables for production use."
+      );
+    }
+  }
+  return DatabaseSync;
+}
 
 export interface User {
   id: string;
@@ -37,9 +54,11 @@ if (config.supabaseUrl && config.supabaseKey) {
 }
 
 // Local SQLite fallback instance
-let sqliteDb: DatabaseSync | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sqliteDb: any = null;
 
-function getSqliteDb(): DatabaseSync {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSqliteDb(): any {
   if (!sqliteDb) {
     const dbPath = process.env.VERCEL ? "/tmp/wavelength.db" : config.dbPath;
     try {
@@ -47,7 +66,8 @@ function getSqliteDb(): DatabaseSync {
     } catch {
       // Ignore if directory already exists
     }
-    sqliteDb = new DatabaseSync(dbPath);
+    const DB = getSqliteClass();
+    sqliteDb = new DB(dbPath);
 
     sqliteDb.exec(`
       PRAGMA journal_mode = WAL;
