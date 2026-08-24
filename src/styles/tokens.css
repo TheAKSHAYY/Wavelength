@@ -152,4 +152,22 @@
   --sidebar-width: 250px;
   --sidebar-collapsed: 64px;
   --topbar-height: 56px;
+
+  /* ---- Type Scale ---- */
+  --text-xs:   12px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-lg:   16px;
+  --text-xl:   20px;
+  --text-2xl:  28px;
+
+  /* ---- Spacing Scale (4px base) ---- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
 }

@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import {
-  Menu,
-  X,
-} from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { navGroups } from "../lib/nav";
-
 import { useStore } from "../lib/store";
 import { initials } from "../lib/format";
 
@@ -22,36 +18,29 @@ export default function Sidebar({
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "open" : ""}`}>
+      {/* Brand */}
       <div className="sidebar-brand">
+        {/* Logo mark */}
         <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            background: "linear-gradient(135deg, var(--accent), var(--accent-warm))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 14,
-          }}
+          className="w-[30px] h-[30px] rounded-[8px] flex items-center justify-center shrink-0 text-white font-bold text-token-base"
+          style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-warm))" }}
         >
           W
         </div>
         <span className="sidebar-brand-text">Wavelength</span>
+
+        {/* Collapse toggle — desktop only */}
         <button
-          className="icon-btn hide-on-mobile"
-          style={{ marginLeft: "auto", width: 28, height: 28 }}
+          className="icon-btn hide-on-mobile ml-auto w-7 h-7"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <Menu size={15} /> : <X size={15} />}
         </button>
+
+        {/* Close button — mobile only */}
         <button
-          className="icon-btn show-on-mobile"
-          style={{ marginLeft: "auto", width: 32, height: 32 }}
+          className="icon-btn show-on-mobile ml-auto w-8 h-8"
           onClick={onMobileClose}
           aria-label="Close sidebar"
         >
@@ -59,6 +48,7 @@ export default function Sidebar({
         </button>
       </div>
 
+      {/* Navigation */}
       <nav className="sidebar-nav">
         {navGroups.map((group) => (
           <div key={group.label}>
@@ -67,13 +57,13 @@ export default function Sidebar({
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`nav-item ${isActive ? "active" : ""}`}
-                title={collapsed ? item.label : undefined}
-                onClick={() => onMobileClose?.()}
-              >
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`nav-item ${isActive ? "active" : ""}`}
+                  title={collapsed ? item.label : undefined}
+                  onClick={() => onMobileClose?.()}
+                >
                   <span className="nav-item-icon">
                     <Icon size={16} />
                   </span>
@@ -88,7 +78,8 @@ export default function Sidebar({
         ))}
       </nav>
 
-      <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 12px" }}>
+      {/* Footer — user profile link */}
+      <div className="sidebar-footer flex flex-col gap-token-1 px-token-3 py-token-2">
         <NavLink
           to="/profile"
           className={`nav-item ${location.pathname === "/profile" ? "active" : ""}`}
@@ -96,29 +87,23 @@ export default function Sidebar({
           onClick={() => onMobileClose?.()}
           style={{ padding: collapsed ? "6px" : "6px 8px", borderRadius: "var(--radius-md)" }}
         >
+          {/* Avatar circle */}
           <div
+            className="w-6 h-6 rounded-token-full flex items-center justify-center text-white shrink-0 font-bold"
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
               background: user?.avatar_color || "var(--accent)",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 10.5,
-              fontWeight: 700,
-              flexShrink: 0,
+              fontSize: "var(--text-xs)",
             }}
           >
             {initials(user?.name || user?.email || "Creator")}
           </div>
+
           {!collapsed && (
-            <div style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden", textAlign: "left", marginLeft: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div className="flex flex-col min-w-0 overflow-hidden text-left ml-token-1">
+              <span className="text-token-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                 {user?.name || "Creator"}
               </span>
-              <span style={{ fontSize: 10, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span className="text-token-xs text-token-text-muted overflow-hidden text-ellipsis whitespace-nowrap">
                 {user?.handle ? `@${user.handle}` : "View Profile"}
               </span>
             </div>

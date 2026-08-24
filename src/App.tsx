@@ -6,6 +6,7 @@ import Sidebar from "./components/Sidebar";
 import TopNav from "./components/TopNav";
 import Chat from "./components/Chat";
 import AuthPage from "./pages/AuthPage";
+import { ToastProvider } from "./components/ui";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
@@ -113,7 +114,9 @@ function AppLayout() {
 export default function App() {
   return (
     <StoreProvider>
-      <AppLayout />
+      <ToastProvider>
+        <AppLayout />
+      </ToastProvider>
     </StoreProvider>
   );
 }

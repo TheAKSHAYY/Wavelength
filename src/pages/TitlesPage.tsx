@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Info,
 } from "lucide-react";
-import { ErrorBanner, EmptyState, Pill } from "../components/SharedUI";
+import { ErrorBanner, Pill } from "../components/SharedUI";
+import { Badge, Skeleton, EmptyState } from "../components/ui";
 import { api } from "../lib/client";
 import { useAppState } from "../lib/store";
 import { useTask } from "../lib/hooks";
@@ -244,26 +245,48 @@ export default function TitlesPage() {
 
       <ErrorBanner message={error} onRetry={clearError} />
 
-      {/* Loading Progress State */}
+      {/* Loading Progress & Skeleton State */}
       {loading && (
-        <div
-          className="card"
-          style={{
-            padding: "32px 24px",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <Loader2 size={28} className="spin" style={{ color: "var(--accent-primary, #38bdf8)" }} />
-          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
-            {RESEARCH_STEPS[loadingStepIndex]}
+        <div className="flex flex-col gap-token-3">
+          {/* Research step banner */}
+          <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex items-center justify-between">
+            <div className="flex items-center gap-token-3">
+              <Loader2 size={18} className="animate-spin text-token-accent" />
+              <div>
+                <div className="text-token-sm font-bold text-token-text">
+                  {RESEARCH_STEPS[loadingStepIndex]}
+                </div>
+                <div className="text-token-xs text-token-text-muted">
+                  Cross-referencing live competitor saturation and content gaps
+                </div>
+              </div>
+            </div>
+            <Badge variant="accent" className="animate-pulse">Analyzing</Badge>
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-            Cross-referencing live competitor saturation and content gaps
-          </div>
+
+          {/* Skeleton Title Cards matching eventual shape */}
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex flex-col gap-token-3"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-token-2">
+                  <Skeleton width="w-8" height="h-6" rounded="sm" />
+                  <Skeleton width="w-20" height="h-5" rounded="full" />
+                </div>
+                <Skeleton width="w-24" height="h-6" rounded="full" />
+              </div>
+              <Skeleton width={i % 2 === 0 ? "w-3/4" : "w-5/6"} height="h-5" />
+              <div className="flex items-center justify-between pt-token-2 border-t border-token-border">
+                <Skeleton width="w-1/2" height="h-4" />
+                <div className="flex gap-token-2">
+                  <Skeleton width="w-16" height="h-7" rounded="md" />
+                  <Skeleton width="w-16" height="h-7" rounded="md" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -326,7 +349,11 @@ export default function TitlesPage() {
 
       {/* Empty State */}
       {titles.length === 0 && !loading && (
-        <EmptyState text="Enter a topic above to launch research and generate 10 distinct, scored title frameworks." />
+        <EmptyState
+          icon={<Sparkles size={36} />}
+          heading="No titles generated yet"
+          description="Enter a topic above to launch research and generate 10 distinct, scored title frameworks."
+        />
       )}
 
       {/* Top 10 Titles List */}

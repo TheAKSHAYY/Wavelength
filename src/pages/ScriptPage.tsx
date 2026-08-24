@@ -16,7 +16,8 @@ import {
   Save,
   Clapperboard,
 } from "lucide-react";
-import { ErrorBanner, EmptyState, Pill } from "../components/SharedUI";
+import { ErrorBanner, Pill } from "../components/SharedUI";
+import { Badge, Skeleton, EmptyState } from "../components/ui";
 import { api } from "../lib/client";
 import { useAppState, useStore } from "../lib/store";
 import { useTask } from "../lib/hooks";
@@ -482,16 +483,51 @@ export default function ScriptPage() {
       <ErrorBanner message={error} onRetry={clearError} />
 
       {!script && !loading && (
-        <EmptyState text="Enter your video title and topic above to draft a creator-grade, retention-focused script." />
+        <EmptyState
+          icon={<FileText size={36} />}
+          heading="No script generated yet"
+          description="Enter your video title and topic above to draft a creator-grade, retention-focused script."
+        />
       )}
 
+      {/* Loading Skeleton State */}
       {loading && (
-        <div className="card" style={{ padding: "36px 24px", textAlign: "center" }}>
-          <Loader2 size={28} className="spin" style={{ color: "var(--accent-primary, #38bdf8)", margin: "0 auto 12px" }} />
-          <div style={{ fontSize: 15, fontWeight: 600 }}>Crafting retention-optimized {mode} script...</div>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 4 }}>
-            Tailoring natural hook, spoken transitions, and honest trade-offs for {title || topic}
+        <div className="flex flex-col gap-token-3">
+          {/* Header Banner */}
+          <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex items-center justify-between">
+            <div className="flex items-center gap-token-3">
+              <Loader2 size={18} className="animate-spin text-token-accent" />
+              <div>
+                <div className="text-token-sm font-bold text-token-text">
+                  Crafting retention-optimized {mode} script...
+                </div>
+                <div className="text-token-xs text-token-text-muted">
+                  Tailoring natural hook, spoken transitions, and honest trade-offs for "{title || topic}"
+                </div>
+              </div>
+            </div>
+            <Badge variant="accent" className="animate-pulse">Writing</Badge>
           </div>
+
+          {/* Retention Hook Skeleton */}
+          <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex flex-col gap-token-2">
+            <Skeleton width="w-40" height="h-4" rounded="sm" />
+            <Skeleton width="w-full" height="h-5" />
+            <Skeleton width="w-4/5" height="h-5" />
+          </div>
+
+          {/* Sections Skeleton */}
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex flex-col gap-token-2">
+              <div className="flex justify-between items-center">
+                <Skeleton width="w-32" height="h-4" rounded="sm" />
+                <Skeleton width="w-20" height="h-4" rounded="full" />
+              </div>
+              <Skeleton width="w-full" height="h-4" />
+              <Skeleton width="w-11/12" height="h-4" />
+              <Skeleton width="w-3/4" height="h-4" />
+            </div>
+          ))}
         </div>
       )}
 
