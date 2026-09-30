@@ -329,7 +329,7 @@ export default function TitlesPage() {
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 12, alignItems: "center" }}>
-            <span style={{ color: "var(--accent-primary, #38bdf8)", fontWeight: 600 }}>🎯 Content Opportunity:</span>
+            <span style={{ color: "var(--accent-primary, #38bdf8)", fontWeight: 600 }}>Content Opportunity:</span>
             <span style={{ color: "var(--text-secondary)" }}>{researchMeta.opportunity}</span>
           </div>
 
@@ -453,7 +453,7 @@ export default function TitlesPage() {
                           lineHeight: 1.4,
                         }}
                       >
-                        💡 <strong>Why it works:</strong> {t.whyItWorks}
+                        <strong>Why it works:</strong> {t.whyItWorks}
                       </div>
                     )}
                   </div>

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "../config.js";
 import { aiLimiter, requireAuthOrToken } from "../middleware.js";
 import { generateAICompletion } from "../services/aiProvider.js";
@@ -137,7 +138,73 @@ router.post("/generate-image", async (req, res) => {
   const fullPrompt = styleStr ? `${styleStr}. ${prompt}` : prompt;
   const negPromptStr = (negativePrompt || "").trim();
 
-  // 1. Try Google Imagen 3 if API Key is configured
+  // 1. Try Google Nano Banana (Gemini 2.5 Flash Image) via @google/genai Interactions API
+  if (config.geminiApiKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+      const interaction = await ai.interactions.create({
+        model: "gemini-2.5-flash-image",
+        input: fullPrompt,
+        generation_config: {
+          max_output_tokens: 8192,
+          image_config: {
+            image_size: "1K",
+            aspect_ratio: "16:9",
+          },
+        },
+        response_modalities: ["image", "text"],
+      });
+
+      let foundBase64: string | undefined;
+      let textDesc = "";
+
+      if (interaction.steps) {
+        for (const step of interaction.steps) {
+          if (step.type === "model_output" && step.content) {
+            for (const part of step.content) {
+              if (part.type === "text") {
+                textDesc = part.text;
+              } else if (part.type === "image" && part.data) {
+                foundBase64 = part.data;
+              }
+            }
+          }
+        }
+      }
+
+      if (foundBase64) {
+        return res.json({
+          image: `data:image/png;base64,${foundBase64}`,
+          provider: "nano-banana",
+          text: textDesc || `Generated visual for "${prompt}" using Nano Banana (Gemini 2.5 Flash Image).`,
+        });
+      }
+    } catch (nanoErr: any) {
+      console.error("\n=============================================");
+      console.error("[GEMINI IMAGE GENERATION ERROR]");
+      console.error("Model: gemini-2.5-flash-image (Nano Banana)");
+      console.error("HTTP Status Code:", nanoErr?.status || nanoErr?.statusCode || "N/A");
+      console.error("Error Message:", nanoErr?.message || "Unknown error");
+      console.error("Full Error Object:", JSON.stringify(nanoErr, Object.getOwnPropertyNames(nanoErr), 2));
+      
+      const errMsg = (nanoErr?.message || "").toLowerCase();
+      if (errMsg.includes("quota") || errMsg.includes("429")) {
+        console.error("Failure Type: QUOTA_EXHAUSTED");
+      } else if (errMsg.includes("auth") || errMsg.includes("unauthenticated") || errMsg.includes("401") || errMsg.includes("403")) {
+        console.error("Failure Type: AUTH_OR_PERMISSION_DENIED");
+      } else if (errMsg.includes("not found") || errMsg.includes("404")) {
+        console.error("Failure Type: MODEL_NOT_FOUND");
+      } else if (errMsg.includes("region") || errMsg.includes("unsupported")) {
+        console.error("Failure Type: REGION_RESTRICTION");
+      } else {
+        console.error("Failure Type: UNKNOWN");
+      }
+      console.error("Falling back to Imagen 3...");
+      console.error("=============================================\n");
+    }
+  }
+
+  // 2. Try Google Imagen 3 if API Key is configured
   if (config.geminiApiKey) {
     try {
       const imagenResp = await fetch(
@@ -171,12 +238,19 @@ router.post("/generate-image", async (req, res) => {
     }
   }
 
-  // 2. High-Fidelity Generative Image Provider (Pollinations FLUX)
+  // 2. High-Fidelity Generative Image Provider (Pollinations)
   try {
     const seed = Math.floor(Math.random() * 1000000);
+    const cleanedPrompt = fullPrompt
+      .replace(/price tag[^,.]*/gi, "")
+      .replace(/showing ['"][^'"]*['"]/gi, "")
+      .replace(/clean uncluttered/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
     let pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-      fullPrompt
-    )}?width=1280&height=720&nologo=true&seed=${seed}&model=flux`;
+      cleanedPrompt
+    )}?width=1280&height=720&nologo=true&seed=${seed}`;
 
     if (negPromptStr) {
       pollinationsUrl += `&negative=${encodeURIComponent(negPromptStr)}`;
@@ -189,7 +263,7 @@ router.post("/generate-image", async (req, res) => {
       const mime = polResp.headers.get("content-type") || "image/jpeg";
       return res.json({
         image: `data:${mime};base64,${base64}`,
-        provider: "flux",
+        provider: "pollinations",
         text: `Generated high-resolution AI thumbnail visual for "${prompt}".`,
       });
     }

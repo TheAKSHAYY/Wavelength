@@ -17,6 +17,7 @@ import { generateJSON } from "../lib/ai";
 import { useTask } from "../lib/hooks";
 import { useStore } from "../lib/store";
 import { ErrorBanner } from "../components/SharedUI";
+import ProjectWorkflowBar from "../components/ProjectWorkflowBar";
 import { z } from "zod";
 
 const str = (fallback = "") =>
@@ -176,29 +177,28 @@ Never include Markdown code fences outside JSON. Never default to coding example
   };
 
   return (
-    <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 1200, margin: "0 auto" }}>
+    <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
+      {/* Workflow Stepper Bar (if active project) */}
+      <ProjectWorkflowBar
+        currentPhase="research"
+        onNextPhase={() => {
+          if (data?.topic) {
+            handleCreateProjectFromAngle(data.fiveVideoRoadmap[0]?.title || data.topic, data.fiveVideoRoadmap[0]?.angle, "Full Video");
+          } else {
+            navigate("/packaging");
+          }
+        }}
+        nextPhaseLabel="Packaging Studio →"
+      />
+
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontFamily: "var(--font-mono)",
-                color: "var(--accent-primary, #38bdf8)",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                fontWeight: 700,
-              }}
-            >
-              WORKSPACE · INTELLIGENCE HUB
-            </span>
-          </div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, margin: 0 }}>
-            Unified Research & Market Signals
+          <h1 style={{ fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 700, margin: "0 0 4px 0" }}>
+            Topic & Competitor Research
           </h1>
-          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", marginTop: 4 }}>
-            Analyze audience demand, competitor gaps, high-volume keywords, and rising trend angles to launch your next project.
+          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", margin: 0 }}>
+            Discover high-demand content opportunities, keywords, and competitor gaps to build your next video
           </p>
         </div>
       </div>
@@ -291,7 +291,7 @@ Never include Markdown code fences outside JSON. Never default to coding example
 
             <div style={{ marginTop: 14, padding: "12px 14px", background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.25)", borderRadius: "var(--radius-md)" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-mint, #34d399)", textTransform: "uppercase", marginBottom: 2 }}>
-                💡 Key Content Opportunity
+                Key Content Opportunity
               </div>
               <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.5 }}>
                 {data.contentOpportunity}

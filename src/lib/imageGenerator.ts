@@ -78,7 +78,7 @@ export interface GenerateImageParams {
 
 export interface GenerateImageResult {
   imageUrl: string;
-  provider: "imagen" | "flux" | "direct";
+  provider: "nano-banana-lite" | "imagen" | "flux" | "direct";
 }
 
 /**
@@ -91,7 +91,7 @@ export async function fetchGeneratedImage(
   const height = params.height || 720;
   const seed = params.seed || Math.floor(Math.random() * 1_000_000);
 
-  // 1. Try server backend route (/api/gemini/generate-image) if available
+  // 1. Try server backend route (/api/gemini/generate-image with Nano Banana Pro / Imagen 3 / 16:9 FLUX)
   try {
     const res = await fetch("/api/gemini/generate-image", {
       method: "POST",
@@ -110,22 +110,52 @@ export async function fetchGeneratedImage(
           provider: data.provider || (data.image.startsWith("data:") ? "imagen" : "flux"),
         };
       }
+      } else {
+        console.error("[IMAGE GENERATOR] Server returned non-ok status:", res.status, res.statusText);
+        try {
+          const errData = await res.text();
+          console.error("[IMAGE GENERATOR] Server error body:", errData);
+        } catch (e) {}
+      }
+    } catch (err: any) {
+      console.error("[IMAGE GENERATOR] Network error fetching /api/gemini/generate-image:", err?.message || err);
     }
-  } catch {
-    // Gracefully fall back to client-side direct FLUX rendering
+  try {
+    const directUrl = generateImageUrl(params.prompt, {
+      width,
+      height,
+      seed,
+      negativePrompt: params.negativePrompt,
+    });
+
+    await preloadImage(directUrl);
+    return {
+      imageUrl: directUrl,
+      provider: "direct",
+    };
+  } catch (directErr) {
+    console.warn("Direct 16:9 generation failed, attempting client fallback:", directErr);
   }
 
-  // 2. Direct client-side FLUX generation
-  const directUrl = generateImageUrl(params.prompt, {
-    width,
-    height,
-    seed,
-    negativePrompt: params.negativePrompt,
-  });
+  // 3. Last resort client fallback via Puter.js
+  if (typeof window !== "undefined" && (window as any).puter?.ai?.txt2img) {
+    try {
+      const puterImg = await (window as any).puter.ai.txt2img(params.prompt, { width, height });
+      const src = puterImg?.src || (typeof puterImg === "string" ? puterImg : null);
+      if (src && typeof src === "string") {
+        return {
+          imageUrl: src,
+          provider: "puter-flux" as any,
+        };
+      }
+    } catch (puterErr) {
+      console.warn("Puter AI txt2img fallback error:", puterErr);
+    }
+  }
 
-  await preloadImage(directUrl);
+  const fallbackUrl = generateImageUrl(params.prompt, { width, height, seed });
   return {
-    imageUrl: directUrl,
+    imageUrl: fallbackUrl,
     provider: "direct",
   };
 }

@@ -209,7 +209,7 @@ ${project.shorts[0].timeline.map((sc) => `Scene ${sc.sceneNumber} (${sc.timeRang
         </div>
 
         {/* Content Type Filter */}
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {["ALL", "Short", "Thumbnail", "Full Video"].map((type) => (
             <button
               key={type}
@@ -314,7 +314,7 @@ ${project.shorts[0].timeline.map((sc) => `Scene ${sc.sceneNumber} (${sc.timeRang
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: 16 }}>
           {filteredProjects.map((project) => (
             <div
               key={project.id}

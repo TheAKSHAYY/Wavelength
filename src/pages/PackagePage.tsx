@@ -316,11 +316,11 @@ export default function PackagePage() {
                 </h2>
 
                 <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 text-token-sm text-token-text-secondary leading-relaxed">
-                  💡 <strong className="text-token-text">Why it Works:</strong> {pkg.idea?.whyPromising}
+                  <strong className="text-token-text">Why it Works:</strong> {pkg.idea?.whyPromising}
                 </div>
 
                 <div className="text-token-sm text-token-text-muted">
-                  👥 <strong className="text-token-text-secondary">Target Audience:</strong> {pkg.idea?.audience}
+                  <strong className="text-token-text-secondary">Target Audience:</strong> {pkg.idea?.audience}
                 </div>
 
                 <div className="pt-token-3 border-t border-token-border flex gap-token-2">
@@ -367,7 +367,7 @@ export default function PackagePage() {
 
                 <div className="bg-token-surface-2 border border-token-border p-token-3 rounded-token-md text-token-sm">
                   <span className="text-token-xs uppercase font-bold text-token-text-muted tracking-wide mr-token-2">
-                    🔥 OVERLAY TEXT HOOK:
+                    OVERLAY TEXT HOOK:
                   </span>
                   <strong className="text-token-accent-amber font-bold">{pkg.thumbnail?.text}</strong>
                 </div>
@@ -421,14 +421,14 @@ export default function PackagePage() {
               <div className="flex flex-col gap-token-3 text-token-sm leading-relaxed">
                 <div className="bg-token-surface-2 border border-token-border p-token-4 rounded-token-md">
                   <span className="text-token-accent-mint font-mono text-token-xs font-bold uppercase tracking-wider block mb-token-1">
-                    ⚡ RETENTION HOOK (0:00 - 0:15)
+                    RETENTION HOOK (0:00 - 0:15)
                   </span>
                   <div className="font-semibold text-token-text">{pkg.script?.hook}</div>
                 </div>
 
                 <div className="bg-token-surface-2 border border-token-border p-token-4 rounded-token-md">
                   <span className="text-token-accent-blue font-mono text-token-xs font-bold uppercase tracking-wider block mb-token-1">
-                    📖 INTRO / PREMISE (0:15 - 0:45)
+                    INTRO / PREMISE (0:15 - 0:45)
                   </span>
                   <div className="text-token-text-secondary">{pkg.script?.intro}</div>
                 </div>
@@ -444,7 +444,7 @@ export default function PackagePage() {
 
                 <div className="bg-token-surface-2 border border-token-border p-token-4 rounded-token-md">
                   <span className="text-token-accent-mint font-mono text-token-xs font-bold uppercase tracking-wider block mb-token-1">
-                    🎯 CALL TO ACTION
+                    CALL TO ACTION
                   </span>
                   <div className="text-token-text-secondary">{pkg.script?.cta}</div>
                 </div>

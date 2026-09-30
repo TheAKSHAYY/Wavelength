@@ -1,7 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { createRequire } from "node:module";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "./config.js";
+
+const require = createRequire(import.meta.url);
 
 // Lazy SQLite loader — node:sqlite is only available in Node.js >= 22.5.
 // On Vercel (Node 20) we use Supabase; SQLite is only used locally.

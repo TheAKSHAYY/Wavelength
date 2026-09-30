@@ -7,4 +7,5 @@ data
 *.local
 coverage
 *.log
-
+__pycache__/
+*.pyc

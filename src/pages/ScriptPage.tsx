@@ -8,19 +8,16 @@ import {
   Download,
   Sparkles,
   Layers,
-  Clock,
-  CheckCircle2,
-  Image as ImageIcon,
-  FolderGit2,
-  User,
   Save,
-  Clapperboard,
+  Eye,
+  X,
+  BookOpen,
 } from "lucide-react";
-import { ErrorBanner, Pill } from "../components/SharedUI";
-import { Badge, Skeleton, EmptyState } from "../components/ui";
+import { ErrorBanner } from "../components/SharedUI";
 import { api } from "../lib/client";
 import { useAppState, useStore } from "../lib/store";
 import { useTask } from "../lib/hooks";
+import ProjectWorkflowBar from "../components/ProjectWorkflowBar";
 import type { Script } from "../types";
 
 export default function ScriptPage() {
@@ -34,36 +31,61 @@ export default function ScriptPage() {
 
   const [script, setScript] = useAppState("script");
   const [title, setTitle] = useState(passedTitle || activeProject?.title || "");
-  const [topic, setTopic] = useState(passedBaseTopic || passedTitle || activeProject?.topic || "Java DSA");
-  const [audience, setAudience] = useState(passedAudience || activeProject?.targetAudience || user?.target_audience || "Students and beginners");
+  const [topic, setTopic] = useState(passedBaseTopic || passedTitle || activeProject?.topic || "Why Senior Developers Write Less Code");
+  const [audience, setAudience] = useState(passedAudience || activeProject?.targetAudience || user?.target_audience || "Software engineers and learners");
   const [language, setLanguage] = useState<"English" | "Hindi" | "Hinglish">(activeProject?.language || "English");
   const [duration, setDuration] = useState<"5-8 minutes" | "8-12 minutes" | "12-15 minutes">("8-12 minutes");
   const [mode, setMode] = useState<"outline" | "full">("full");
   const [copied, setCopied] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [showTeleprompter, setShowTeleprompter] = useState(false);
 
-  const openThumbnailStudio = () => {
-    navigate("/packaging", {
-      state: {
-        title: script?.title || title || topic,
-        hook: script?.hook || "",
-        topic: topic || title,
-        audience: script?.audience || audience,
-        angle: passedAngle,
-        projectId: activeProject?.id,
-      },
-    });
-  };
+  const { loading, error, clearError, run } = useTask();
 
-  const handleCreateShortsFromVideo = () => {
-    navigate("/shorts", {
-      state: {
-        title: script?.title || title || topic,
-        topic: topic || title,
-        hook: script?.hook || "",
+  useEffect(() => {
+    if (passedTitle) setTitle(passedTitle);
+    if (passedBaseTopic) setTopic(passedBaseTopic);
+    if (passedAudience) setAudience(passedAudience);
+  }, [passedTitle, passedBaseTopic, passedAudience]);
+
+  const generate = async (customMode?: "outline" | "full") => {
+    const targetMode = customMode || mode;
+    if (!topic.trim() && !title.trim()) return;
+
+    clearError();
+    await run(async () => {
+      const parsed = await api.post<Script>("/api/generate/script", {
+        topic: topic.trim() || title.trim(),
+        title: title.trim() || topic.trim(),
+        audience: audience.trim(),
         angle: passedAngle,
-        projectId: activeProject?.id,
-      },
+        language,
+        duration,
+        mode: targetMode,
+      });
+      setScript(parsed);
+
+      if (activeProject) {
+        updateProject(activeProject.id, {
+          title: parsed.title || title || topic,
+          status: "Writing",
+          progressPercent: Math.max(activeProject.progressPercent || 0, 85),
+          longFormScript: {
+            title: parsed.title || title || topic,
+            hook: parsed.hook,
+            intro: parsed.intro,
+            sections: (parsed.sections || []).map((s, idx) => ({
+              id: `sec_${idx + 1}`,
+              heading: s.heading,
+              goal: s.purpose || "",
+              spokenVoiceover: s.content,
+              visualCue: s.retentionOpportunity || "",
+            })),
+            cta: parsed.cta,
+            estimatedMinutes: 8,
+          },
+        });
+      }
     });
   };
 
@@ -105,31 +127,6 @@ export default function ScriptPage() {
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
-  const { loading, error, clearError, run } = useTask();
-
-  useEffect(() => {
-    if (passedTitle) setTitle(passedTitle);
-    if (passedBaseTopic) setTopic(passedBaseTopic);
-    if (passedAudience) setAudience(passedAudience);
-  }, [passedTitle, passedBaseTopic, passedAudience]);
-
-  const generate = async (customMode?: "outline" | "full") => {
-    const targetMode = customMode || mode;
-    if (!topic.trim() && !title.trim()) return;
-
-    await run(async () => {
-      const parsed = await api.post<Script>("/api/generate/script", {
-        topic: topic.trim() || title.trim(),
-        title: title.trim() || topic.trim(),
-        audience: audience.trim(),
-        angle: passedAngle,
-        language,
-        duration,
-        mode: targetMode,
-      });
-      setScript(parsed);
-    });
-  };
 
   const copyFullScript = () => {
     if (!script) return;
@@ -138,7 +135,6 @@ export default function ScriptPage() {
       `CORE TOPIC: ${script.topic || topic}`,
       `TARGET AUDIENCE: ${script.audience || audience}`,
       `LANGUAGE: ${script.language || language}`,
-      `FORMAT: ${script.format || "Creator Guide"}`,
       `\n--- HOOK (0:00 - 0:15) ---\n${script.hook}`,
       `\n--- INTRO & PREMISE (0:15 - 0:45) ---\n${script.intro}`,
       `\n--- MAIN CONTENT ---`,
@@ -157,7 +153,7 @@ export default function ScriptPage() {
     const fullText = [
       `# ${script.title || title || topic}`,
       `**Core Topic:** ${script.topic || topic}`,
-      `**Target Audience:** ${script.audience || audience} | **Language:** ${script.language || language} | **Format:** ${script.format || "Creator Guide"}`,
+      `**Target Audience:** ${script.audience || audience} | **Language:** ${script.language || language}`,
       `\n## HOOK (0:00 - 0:15)\n${script.hook}`,
       `\n## INTRO & PREMISE (0:15 - 0:45)\n${script.intro}`,
       `\n## MAIN CONTENT`,
@@ -177,590 +173,472 @@ export default function ScriptPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Calculate approximate words and spoken time
+  // Approximate spoken reading words and duration
   const totalWords = script
-    ? `${script.hook} ${script.intro} ${script.sections.map((s) => s.content).join(" ")} ${script.cta}`.split(/\s+/).length
+    ? `${script.hook} ${script.intro} ${script.sections?.map((s) => s.content).join(" ") || ""} ${script.cta}`.trim().split(/\s+/).length
     : 0;
-  const estMinutes = (totalWords / 140).toFixed(1);
+  const estimatedReadMinutes = Math.round((totalWords / 140) * 10) / 10;
 
   return (
-    <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Project & Creator Profile Context Bar */}
-      {activeProject && (
-        <div
-          style={{
-            background: "var(--surface-2)",
-            border: "1px solid rgba(168, 85, 247, 0.2)",
-            borderRadius: "var(--radius-md)",
-            padding: "8px 14px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 10,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <FolderGit2 size={15} color="#a855f7" />
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-              PROJECT: {activeProject.title}
-            </span>
-            <span
-              style={{
-                fontSize: 10.5,
-                fontWeight: 600,
-                padding: "2px 6px",
-                borderRadius: 4,
-                background: "rgba(168, 85, 247, 0.15)",
-                color: "#a855f7",
-              }}
-            >
-              {activeProject.status}
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11.5 }}>
-            <button
-              onClick={() => navigate("/packaging", { state: { projectId: activeProject.id } })}
-              style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}
-            >
-              Packaging {activeProject.packaging ? "✓" : "○"}
-            </button>
-            <span style={{ color: "#a855f7", fontWeight: 700 }}>
-              Long-Form Studio (Active)
-            </span>
-            <button
-              onClick={() => navigate("/shorts", { state: { projectId: activeProject.id } })}
-              style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}
-            >
-              Shorts {(activeProject.shorts?.length || 0) > 0 ? "✓" : "○"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Creator Profile Memory Banner */}
-      <div
-        style={{
-          background: "rgba(168, 85, 247, 0.04)",
-          border: "1px solid rgba(168, 85, 247, 0.12)",
-          borderRadius: "var(--radius-md)",
-          padding: "6px 12px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: 11.5,
-          color: "var(--text-secondary)",
+    <div
+      className="page-enter"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+        maxWidth: 1160,
+        margin: "0 auto",
+        paddingBottom: 60,
+      }}
+    >
+      {/* ── 1. Top Workflow Bar ────────────────────────────────────── */}
+      <ProjectWorkflowBar
+        currentPhase="script"
+        onNextPhase={() => {
+          handleSaveToProject();
+          navigate("/packaging", {
+            state: {
+              projectId: activeProject?.id,
+              topic: script?.topic || topic,
+              title: script?.title || title,
+            },
+          });
         }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <User size={13} color="#a855f7" />
-          <span>
-            <strong>Creator Memory:</strong> {user?.niche ? user.niche.slice(0, 26) : "Tech & Education"} • Audience: <strong>{audience}</strong> • Language: <strong>{language}</strong>
-          </span>
-        </div>
-        <button
-          onClick={() => navigate("/profile")}
-          style={{ background: "none", border: "none", color: "#a855f7", fontWeight: 600, cursor: "pointer", fontSize: 11 }}
-        >
-          [ Override ]
-        </button>
-      </div>
+        nextPhaseLabel="Packaging & Titles →"
+      />
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+      {/* ── 2. Studio Title & Actions ──────────────────────────────── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontFamily: "var(--font-mono)",
-                color: "#a855f7",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                fontWeight: 700,
-              }}
-            >
-              STUDIO · LONG-FORM SCRIPTING
-            </span>
+            <FileText size={22} color="var(--accent-blue)" />
+            <h1 style={{ fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 700, margin: 0 }}>
+              Full Video Script Studio
+            </h1>
           </div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: 0 }}>
-            Long-Form Studio
-          </h1>
-          <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 14 }}>
-            Dynamic retention-focused scriptwriting engine tailored to your exact video title, topic, audience, and language.
+          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", margin: 0 }}>
+            Generate and edit long-form scripts structured for maximum viewer retention, pacing, and B-roll cues
           </p>
         </div>
 
         {script && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
+              onClick={() => setShowTeleprompter(true)}
+              className="btn btn-secondary"
+              style={{ fontSize: 13, gap: 6 }}
+            >
+              <Eye size={14} /> Teleprompter Mode
+            </button>
+
+            <button
+              onClick={copyFullScript}
+              className="btn btn-secondary"
+              style={{ fontSize: 13, gap: 6 }}
+            >
+              {copied ? <Check size={14} color="var(--accent-mint)" /> : <Copy size={14} />}
+              {copied ? "Copied!" : "Copy Full Script"}
+            </button>
+
+            <button
+              onClick={downloadScript}
+              className="btn btn-secondary"
+              style={{ fontSize: 13, gap: 6 }}
+            >
+              <Download size={14} /> Download .md
+            </button>
+
+            <button
               onClick={handleSaveToProject}
-              className="btn btn-outline"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
-                borderRadius: 6,
-                fontSize: 13,
-                cursor: "pointer",
-                background: savedSuccess ? "rgba(16, 185, 129, 0.15)" : undefined,
-                color: savedSuccess ? "#34d399" : undefined,
-                borderColor: savedSuccess ? "#34d399" : undefined,
-              }}
+              className="btn btn-secondary"
+              style={{ fontSize: 13, gap: 6 }}
             >
-              {savedSuccess ? <Check size={14} /> : <Save size={14} />}
-              {savedSuccess ? "Saved to Project!" : "Save to Project"}
+              {savedSuccess ? <Check size={14} color="var(--accent-mint)" /> : <Save size={14} />}
+              {savedSuccess ? "Saved!" : "Save to Project"}
             </button>
+
             <button
-              onClick={openThumbnailStudio}
-              className="btn btn-outline"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
+              onClick={() => navigate("/packaging", { state: { projectId: activeProject?.id, title: script.title || title } })}
+              className="btn btn-primary"
+              style={{ fontSize: 13, gap: 6 }}
             >
-              <ImageIcon size={14} color="#f59e0b" /> Create Thumbnail
-            </button>
-            <button
-              onClick={handleCreateShortsFromVideo}
-              className="btn btn-outline"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
-            >
-              <Clapperboard size={14} color="#38bdf8" /> Create Shorts from Video
+              <Layers size={14} /> Design Thumbnail & Titles →
             </button>
           </div>
         )}
       </div>
 
-      {/* Context Inputs Card */}
-      <div className="card" style={{ padding: "clamp(16px, 3vw, 24px)", display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, display: "block" }}>
-              Video Title
-            </label>
-            <input
-              className="input"
-              style={{ width: "100%", fontSize: 13.5 }}
-              placeholder="e.g. Stop Using ChatGPT for College: Use These Specialized AI Tools Instead"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+      {error && <ErrorBanner error={error} onDismiss={clearError} />}
 
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, display: "block" }}>
-              Core Topic / Subject
+      {/* ── 3. Configuration & Generation Card ─────────────────────── */}
+      <div
+        style={{
+          borderRadius: "var(--radius-lg)",
+          padding: "20px 22px",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase" }}>
+              Video Concept or Working Title
             </label>
             <input
-              className="input"
-              style={{ width: "100%", fontSize: 13.5 }}
-              placeholder="e.g. AI tools for students, Java DSA, Python Automation"
+              type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, display: "block" }}>
-              Target Audience
-            </label>
-            <input
-              className="input"
-              style={{ width: "100%", fontSize: 13.5 }}
-              placeholder="e.g. College students, beginner developers"
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, display: "block" }}>
-              Script Language
-            </label>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["English", "Hinglish", "Hindi"] as const).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  style={{
-                    flex: 1,
-                    padding: "8px 6px",
-                    borderRadius: "var(--radius-md)",
-                    background: language === lang ? "var(--accent-primary-dim, rgba(56, 189, 248, 0.15))" : "var(--surface-2)",
-                    border: language === lang ? "1px solid var(--accent-primary, #38bdf8)" : "1px solid var(--border)",
-                    color: language === lang ? "var(--accent-primary, #38bdf8)" : "var(--text-secondary)",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: language === lang ? 600 : 500,
-                  }}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, display: "block" }}>
-              Target Duration
-            </label>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["5-8 minutes", "8-12 minutes", "12-15 minutes"] as const).map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDuration(d)}
-                  style={{
-                    flex: 1,
-                    padding: "8px 4px",
-                    borderRadius: "var(--radius-md)",
-                    background: duration === d ? "var(--accent-mint-dim, rgba(52, 211, 153, 0.15))" : "var(--surface-2)",
-                    border: duration === d ? "1px solid var(--accent-mint, #34d399)" : "1px solid var(--border)",
-                    color: duration === d ? "var(--accent-mint, #34d399)" : "var(--text-secondary)",
-                    cursor: "pointer",
-                    fontSize: 11.5,
-                    fontWeight: duration === d ? 600 : 500,
-                  }}
-                >
-                  {d.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
-          {/* Mode Switcher */}
-          <div style={{ display: "flex", gap: 6, background: "var(--surface-2)", padding: 3, borderRadius: "var(--radius-md)", flexWrap: "wrap" }}>
-            <button
-              onClick={() => setMode("outline")}
+              onKeyDown={(e) => e.key === "Enter" && generate()}
+              placeholder="e.g. Why Senior Developers Write Less Code..."
               style={{
-                padding: "6px 14px",
-                borderRadius: "var(--radius-sm)",
-                border: "none",
-                background: mode === "outline" ? "var(--surface-1)" : "transparent",
-                color: mode === "outline" ? "var(--text-primary)" : "var(--text-muted)",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: mode === "outline" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
+                width: "100%",
+                height: 44,
+                padding: "0 14px",
+                borderRadius: "var(--radius-md)",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+                fontSize: 14,
+                outline: "none",
               }}
-            >
-              <Layers size={13} style={{ display: "inline", marginRight: 4, verticalAlign: "-2px" }} /> Script Outline
-            </button>
-            <button
-              onClick={() => setMode("full")}
-              style={{
-                padding: "6px 14px",
-                borderRadius: "var(--radius-sm)",
-                border: "none",
-                background: mode === "full" ? "var(--surface-1)" : "transparent",
-                color: mode === "full" ? "var(--text-primary)" : "var(--text-muted)",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: mode === "full" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
-              }}
-            >
-              <FileText size={13} style={{ display: "inline", marginRight: 4, verticalAlign: "-2px" }} /> Full Spoken Script
-            </button>
+            />
           </div>
 
           <button
-            className="btn"
             onClick={() => generate()}
-            disabled={loading || (!topic.trim() && !title.trim())}
-            style={{ padding: "10px 24px", fontSize: 13.5 }}
+            disabled={loading || !topic.trim()}
+            className="btn btn-primary"
+            style={{ height: 44, padding: "0 22px", fontSize: 13.5, gap: 6 }}
           >
             {loading ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}
-            {loading ? "Crafting Script..." : mode === "outline" ? "Generate Outline" : "Generate Full Script"}
+            {loading ? "Writing Script..." : "Generate Script"}
           </button>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 }}>
+              Target Length
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(e.target.value as any)}
+              style={{
+                width: "100%",
+                height: 38,
+                padding: "0 10px",
+                borderRadius: "var(--radius-md)",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+                fontSize: 13,
+              }}
+            >
+              <option value="5-8 minutes">5–8 Minutes (Punchy Breakdown)</option>
+              <option value="8-12 minutes">8–12 Minutes (Standard Deep Dive)</option>
+              <option value="12-15 minutes">12–15 Minutes (Comprehensive Masterclass)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 }}>
+              Language & Cadence
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as any)}
+              style={{
+                width: "100%",
+                height: 38,
+                padding: "0 10px",
+                borderRadius: "var(--radius-md)",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+                fontSize: 13,
+              }}
+            >
+              <option value="English">English (Global Technical)</option>
+              <option value="Hinglish">Hinglish (Natural Creator Conversation)</option>
+              <option value="Hindi">Hindi (हिंदी - Spoken Hindi)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 }}>
+              Generation Mode
+            </label>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => setMode("full")}
+                className={`btn ${mode === "full" ? "btn-primary" : "btn-secondary"}`}
+                style={{ flex: 1, height: 38, fontSize: 12 }}
+              >
+                Full Word-for-Word
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("outline")}
+                className={`btn ${mode === "outline" ? "btn-primary" : "btn-secondary"}`}
+                style={{ flex: 1, height: 38, fontSize: 12 }}
+              >
+                Bullet Outline
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <ErrorBanner message={error} onRetry={clearError} />
-
-      {!script && !loading && (
-        <EmptyState
-          icon={<FileText size={36} />}
-          heading="No script generated yet"
-          description="Enter your video title and topic above to draft a creator-grade, retention-focused script."
-        />
-      )}
-
-      {/* Loading Skeleton State */}
-      {loading && (
-        <div className="flex flex-col gap-token-3">
-          {/* Header Banner */}
-          <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex items-center justify-between">
-            <div className="flex items-center gap-token-3">
-              <Loader2 size={18} className="animate-spin text-token-accent" />
-              <div>
-                <div className="text-token-sm font-bold text-token-text">
-                  Crafting retention-optimized {mode} script...
-                </div>
-                <div className="text-token-xs text-token-text-muted">
-                  Tailoring natural hook, spoken transitions, and honest trade-offs for "{title || topic}"
-                </div>
-              </div>
-            </div>
-            <Badge variant="accent" className="animate-pulse">Writing</Badge>
-          </div>
-
-          {/* Retention Hook Skeleton */}
-          <div className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex flex-col gap-token-2">
-            <Skeleton width="w-40" height="h-4" rounded="sm" />
-            <Skeleton width="w-full" height="h-5" />
-            <Skeleton width="w-4/5" height="h-5" />
-          </div>
-
-          {/* Sections Skeleton */}
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="bg-token-surface-2 border border-token-border rounded-token-md p-token-4 flex flex-col gap-token-2">
-              <div className="flex justify-between items-center">
-                <Skeleton width="w-32" height="h-4" rounded="sm" />
-                <Skeleton width="w-20" height="h-4" rounded="full" />
-              </div>
-              <Skeleton width="w-full" height="h-4" />
-              <Skeleton width="w-11/12" height="h-4" />
-              <Skeleton width="w-3/4" height="h-4" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Script Display Output */}
-      {script && !loading && (
-        <div className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18 }}>
-          {/* Header Metadata Bar */}
+      {/* ── 4. Script Document Display ─────────────────────────────── */}
+      {script ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Read Time & Stats Banner */}
           <div
             style={{
+              padding: "12px 18px",
+              borderRadius: "var(--radius-md)",
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
               display: "flex",
+              alignItems: "center",
               justifyContent: "space-between",
-              alignItems: "flex-start",
               flexWrap: "wrap",
               gap: 12,
-              paddingBottom: 16,
-              borderBottom: "1px solid var(--border)",
+              fontSize: 12.5,
+              color: "var(--text-secondary)",
             }}
           >
             <div>
-              <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
-                <Pill>{script.format || "Creator Guide"}</Pill>
-                <span style={{ color: "var(--text-dim)" }}>·</span>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  Audience: <strong>{script.audience || audience}</strong>
-                </span>
-                <span style={{ color: "var(--text-dim)" }}>·</span>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  Language: <strong>{script.language || language}</strong>
-                </span>
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
-                {script.title || title || topic}
-              </div>
+              Spoken Word Count: <strong style={{ color: "var(--text)" }}>{totalWords} words</strong> •
+              Estimated Duration: <strong style={{ color: "var(--accent-mint)" }}>~{estimatedReadMinutes} minutes</strong> (at ~140 wpm cadence)
             </div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {/* Word count & Spoken time tracker */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 12px",
-                  background: "var(--surface-2)",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--border)",
-                  fontSize: 12,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <Clock size={13} color="var(--accent-primary)" />
-                <span>
-                  ~<strong>{totalWords}</strong> words (~{estMinutes} mins)
-                </span>
-              </div>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {script.sections?.length || 0} Body Sections
+            </span>
+          </div>
 
+          {/* Section 1: 0–15s Hook */}
+          <div
+            style={{
+              borderRadius: "var(--radius-lg)",
+              padding: "20px 22px",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-mono)", color: "var(--accent-amber)", textTransform: "uppercase" }}>
+                Act 1: Verbal Hook (0:00 – 0:15)
+              </span>
               <button
-                onClick={copyFullScript}
-                className="btn btn-ghost"
-                style={{ padding: "6px 12px", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}
+                onClick={() => navigator.clipboard.writeText(script.hook)}
+                className="icon-btn"
+                style={{ width: 28, height: 28 }}
+                title="Copy hook"
               >
-                {copied ? <Check size={13} color="var(--accent-mint)" /> : <Copy size={13} />}
-                {copied ? "Copied!" : "Copy"}
+                <Copy size={13} />
               </button>
-
-              <button
-                onClick={openThumbnailStudio}
-                className="btn"
-                style={{
-                  padding: "6px 12px",
-                  fontSize: 12.5,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "linear-gradient(135deg, var(--accent), var(--accent-warm))",
-                  color: "#fff",
-                }}
-              >
-                <ImageIcon size={13} /> Studio Thumbnail
-              </button>
-
-              <button
-                onClick={downloadScript}
-                className="btn btn-ghost"
-                style={{ padding: "6px 12px", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}
-              >
-                <Download size={13} /> Export .MD
-              </button>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", lineHeight: 1.6 }}>
+              "{script.hook}"
             </div>
           </div>
 
-          {/* Quality Breakdown Indicator */}
-          {script.qualityScore && (
-            <div
-              style={{
-                display: "flex",
-                gap: 14,
-                padding: "10px 14px",
-                background: "rgba(52, 211, 153, 0.04)",
-                border: "1px solid rgba(52, 211, 153, 0.2)",
-                borderRadius: "var(--radius-md)",
-                fontSize: 12,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--accent-mint, #34d399)", fontWeight: 700 }}>
-                <CheckCircle2 size={14} /> Quality Score: {script.qualityScore.overall}/100
-              </div>
-              <span style={{ color: "var(--text-dim)" }}>|</span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                Topic Relevance: <strong>{script.qualityScore.relevance}%</strong>
+          {/* Section 2: Intro & Premise */}
+          <div
+            style={{
+              borderRadius: "var(--radius-lg)",
+              padding: "20px 22px",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-mono)", color: "var(--accent-blue)", textTransform: "uppercase" }}>
+                Act 2: Premise & Stakes (0:15 – 0:45)
               </span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                Retention Strength: <strong>{script.qualityScore.retention}%</strong>
-              </span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                Naturalness: <strong>{script.qualityScore.naturalness}%</strong>
-              </span>
-            </div>
-          )}
-
-          {/* Script Sections */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, lineHeight: 1.6 }}>
-            {/* HOOK */}
-            <div style={{ background: "var(--surface-2)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
-                <span style={{ color: "var(--accent-mint, #34d399)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800 }}>
-                  ⚡ RETENTION HOOK (0:00 - 0:15)
-                </span>
-                <button
-                  onClick={openThumbnailStudio}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    background: "rgba(56, 189, 248, 0.12)",
-                    color: "var(--accent-primary, #38bdf8)",
-                    border: "1px solid rgba(56, 189, 248, 0.3)",
-                    padding: "3px 8px",
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ImageIcon size={12} /> Craft Matching Thumbnail
-                </button>
-              </div>
-              <div style={{ fontSize: 14.5, fontWeight: 500, color: "var(--text-primary)" }}>{script.hook}</div>
-            </div>
-
-            {/* INTRO */}
-            <div style={{ background: "var(--surface-2)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ color: "var(--accent-primary, #38bdf8)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800 }}>
-                  📖 PREMISE & ROADMAP (0:15 - 0:45)
-                </span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>Value proposition</span>
-              </div>
-              <div style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>{script.intro}</div>
-            </div>
-
-            {/* MAIN SECTIONS */}
-            {(script.sections || []).map((s, i) => (
-              <div
-                key={i}
-                style={{ background: "var(--surface-2)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+              <button
+                onClick={() => navigator.clipboard.writeText(script.intro)}
+                className="icon-btn"
+                style={{ width: 28, height: 28 }}
+                title="Copy intro"
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
-                  <span style={{ color: "var(--accent-amber, #fbbf24)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800 }}>
-                    SECTION {i + 1}: {s.heading?.toUpperCase()}
-                  </span>
-                  {s.purpose && (
-                    <span style={{ fontSize: 11.5, color: "var(--text-dim)" }}>
-                      🎯 {s.purpose}
+                <Copy size={13} />
+              </button>
+            </div>
+            <div style={{ fontSize: 14.5, color: "var(--text-secondary)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+              {script.intro}
+            </div>
+          </div>
+
+          {/* Section 3: Body Sections */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--text)" }}>
+              Core Narrative Sections
+            </h3>
+
+            {script.sections?.map((section, idx) => (
+              <div
+                key={idx}
+                style={{
+                  borderRadius: "var(--radius-lg)",
+                  padding: "20px 22px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-mono)", color: "var(--accent)" }}>
+                      SECTION {idx + 1}
                     </span>
-                  )}
+                    <h4 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--text)" }}>
+                      {section.heading}
+                    </h4>
+                  </div>
+
+                  <button
+                    onClick={() => navigator.clipboard.writeText(section.content)}
+                    className="icon-btn"
+                    style={{ width: 28, height: 28 }}
+                    title="Copy section"
+                  >
+                    <Copy size={13} />
+                  </button>
                 </div>
-                <div style={{ fontSize: 13.5, color: "var(--text-secondary)", marginTop: 6, lineHeight: 1.65 }}>{s.content}</div>
+
+                {section.purpose && (
+                  <div style={{ fontSize: 11.5, color: "var(--accent-mint)", fontWeight: 600 }}>
+                    Goal: {section.purpose}
+                  </div>
+                )}
+
+                <div style={{ fontSize: 14.5, color: "var(--text-secondary)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+                  {section.content}
+                </div>
+
+                {section.retentionOpportunity && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    <strong>Visual Cue / B-Roll:</strong> {section.retentionOpportunity}
+                  </div>
+                )}
               </div>
             ))}
+          </div>
 
-            {/* CTA */}
-            <div style={{ background: "var(--surface-2)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-              <span style={{ color: "var(--accent-mint, #34d399)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800 }}>
-                🎯 CALL TO ACTION
+          {/* Section 4: Call to Action (CTA) */}
+          <div
+            style={{
+              borderRadius: "var(--radius-lg)",
+              padding: "20px 22px",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "var(--font-mono)", color: "var(--accent-mint)", textTransform: "uppercase" }}>
+                Payoff & Call to Action (CTA)
               </span>
-              <div style={{ fontSize: 13.5, color: "var(--text-secondary)", marginTop: 6 }}>{script.cta}</div>
+              <button
+                onClick={() => navigator.clipboard.writeText(script.cta)}
+                className="icon-btn"
+                style={{ width: 28, height: 28 }}
+                title="Copy CTA"
+              >
+                <Copy size={13} />
+              </button>
+            </div>
+            <div style={{ fontSize: 14.5, color: "var(--text)", lineHeight: 1.6 }}>
+              "{script.cta}"
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Empty State */
+        <div
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            borderRadius: "var(--radius-lg)",
+            background: "var(--surface)",
+            border: "1px dashed var(--border)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <BookOpen size={32} color="var(--accent-blue)" />
+          <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Ready to Script Your Video</h3>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", maxWidth: 460, margin: 0 }}>
+            Enter a topic above or launch directly from an idea. Wavelength will generate a multi-section, retention-paced spoken script.
+          </p>
+        </div>
+      )}
+
+      {/* ── 5. Fullscreen Teleprompter Mode ────────────────────────── */}
+      {showTeleprompter && script && (
+        <div className="teleprompter-modal">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 16 }}>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--accent-blue)", letterSpacing: "0.08em" }}>
+                Rehearsal / Teleprompter Mode
+              </span>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "2px 0 0 0", color: "#fff" }}>
+                {script.title || title || topic}
+              </h2>
             </div>
 
-            {/* CHAPTERS */}
-            {script.chapters && script.chapters.length > 0 && (
-              <div style={{ background: "var(--surface-1)", padding: 18, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-                <span style={{ color: "var(--text-dim)", fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 800, textTransform: "uppercase" }}>
-                  ⏱️ YOUTUBE CHAPTERS
-                </span>
-                <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 10 }}>
-                  {script.chapters.map((c, i) => (
-                    <div key={i} style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--text-secondary)" }}>
-                      {c}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Next Step Transition to Content Calendar */}
-            <div
-              style={{
-                marginTop: 12,
-                padding: "16px 20px",
-                background: "linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                border: "1px solid rgba(52, 211, 153, 0.3)",
-                borderRadius: "var(--radius-md)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 12,
-              }}
+            <button
+              onClick={() => setShowTeleprompter(false)}
+              className="icon-btn"
+              style={{ color: "#fff" }}
             >
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Script Ready for Production</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Add this video to your publishing calendar to track production and release dates.</div>
-              </div>
-              <button
-                onClick={() => navigate("/calendar", { state: { newTitle: script.title || title || topic, newTopic: topic } })}
-                className="btn btn-primary"
-                style={{ padding: "8px 18px", fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
-              >
-                Add to Content Calendar →
-              </button>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="teleprompter-content">
+            <div style={{ fontSize: 24, lineHeight: 1.9, color: "#f8fafc" }}>
+              <p style={{ color: "var(--accent-amber)", marginBottom: 30 }}>"{script.hook}"</p>
+              <p style={{ marginBottom: 30 }}>{script.intro}</p>
+              {script.sections?.map((s, idx) => (
+                <div key={idx} style={{ marginBottom: 40 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", marginBottom: 8 }}>
+                    Section {idx + 1}: {s.heading}
+                  </div>
+                  <p>{s.content}</p>
+                </div>
+              ))}
+              <p style={{ color: "var(--accent-mint)", marginTop: 30 }}>"{script.cta}"</p>
             </div>
           </div>
         </div>

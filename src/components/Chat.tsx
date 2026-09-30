@@ -174,7 +174,7 @@ export default function Chat() {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: `⚠️ **Error:** ${errorMessage}`,
+        content: `**Error:** ${errorMessage}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);

@@ -87,12 +87,12 @@ export default function SettingsPage() {
           justifyContent: "space-between",
           textDecoration: "none",
           color: "inherit",
-          background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08), var(--surface-2))",
-          border: "1px solid rgba(99, 102, 241, 0.25)",
+          background: "var(--surface-1)",
+          border: "1px solid var(--border)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ padding: 10, borderRadius: "var(--radius-md)", background: "rgba(99, 102, 241, 0.15)", color: "var(--accent)" }}>
+          <div style={{ padding: 10, borderRadius: "var(--radius-md)", background: "rgba(255, 107, 74, 0.12)", color: "var(--accent)" }}>
             <User size={20} />
           </div>
           <div>

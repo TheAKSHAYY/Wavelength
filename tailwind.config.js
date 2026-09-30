@@ -5,27 +5,34 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+        hindi: ["Noto Sans Devanagari", "system-ui", "sans-serif"],
+      },
       colors: {
-        // ---- Core palette (Playful Geometric) ----
-        background: "#FFFDF5",
-        foreground: "#1E293B",
-        muted: "#F1F5F9",
-        "muted-foreground": "#64748B",
-        accent: "#8B5CF6",
+        // ---- Core palette (Matches Landing Page) ----
+        background: "#0B0B0F",
+        foreground: "#F5F5F7",
+        muted: "#14141A",
+        "muted-foreground": "#9A9AA8",
+        accent: "#FF6B4A",
+        "accent-hover": "#FF8566",
         "accent-foreground": "#FFFFFF",
-        secondary: "#F472B6",
-        tertiary: "#FBBF24",
+        secondary: "#FF8566",
+        tertiary: "#22D3EE",
         quaternary: "#34D399",
-        border: "#E2E8F0",
-        input: "#FFFFFF",
-        card: "#FFFFFF",
-        ring: "#8B5CF6",
+        border: "#2A2A35",
+        input: "#1C1C24",
+        card: "#14141A",
+        ring: "#FF6B4A",
 
-        // ---- Surface helpers (legacy var mapping) ----
-        surface: "#FFFFFF",
-        "surface-2": "#F1F5F9",
-        "surface-3": "#E2E8F0",
-        "text-dim": "#9CA3AF",
+        // ---- Surface helpers ----
+        surface: "#14141A",
+        "surface-2": "#1C1C24",
+        "surface-3": "#252530",
+        "text-dim": "#686878",
 
         // ---- Token-mapped colors (runtime CSS var resolution) ----
         token: {
@@ -51,34 +58,40 @@ export default {
         },
       },
 
-      fontFamily: {
-        display: ['"Outfit"', "system-ui", "sans-serif"],
-        body:    ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
-        mono:    ['"IBM Plex Mono"', "monospace"],
-      },
-
       fontSize: {
-        xs:   "0.6875rem",
-        sm:   "0.8125rem",
-        base: "0.875rem",
-        md:   "1rem",
-        lg:   "1.125rem",
-        xl:   "1.25rem",
-        "2xl":"1.5rem",
-        "3xl":"2rem",
-        "4xl":"2.5rem",
-        "5xl":"3.125rem",
-        "6xl":"4rem",
+        xs:   ["12px", { lineHeight: "1.4", letterSpacing: "0.05em" }],
+        sm:   ["14px", { lineHeight: "1.5" }],
+        base: ["16px", { lineHeight: "1.6" }],
+        md:   ["20px", { lineHeight: "1.25", letterSpacing: "-0.02em" }],
+        lg:   ["25px", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        xl:   ["31px", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
+        "2xl":["39px", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
+        "3xl":["49px", { lineHeight: "1.1", letterSpacing: "-0.025em" }],
+        "4xl":["61px", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
         // Token-mapped aliases
         "token-xs":   "var(--text-xs)",
         "token-sm":   "var(--text-sm)",
         "token-base": "var(--text-base)",
+        "token-md":   "var(--text-md)",
         "token-lg":   "var(--text-lg)",
         "token-xl":   "var(--text-xl)",
         "token-2xl":  "var(--text-2xl)",
       },
 
       spacing: {
+        1:  "4px",
+        2:  "8px",
+        3:  "12px",
+        4:  "16px",
+        5:  "20px",
+        6:  "24px",
+        8:  "32px",
+        10: "40px",
+        12: "48px",
+        16: "64px",
+        20: "80px",
+        24: "96px",
+        30: "120px",
         // Token-mapped spacing aliases
         "token-1":  "var(--space-1)",
         "token-2":  "var(--space-2)",

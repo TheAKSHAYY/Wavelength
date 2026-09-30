@@ -1,70 +1,192 @@
-/* ==========================================================================
-   Wavelength — Global Base Styles
-   ========================================================================== */
+/* ── Core Global Styles ─────────────────────────────────────────────────── */
 
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@tailwind components;
+@tailwind utilities;
 
+/* ── Color Scheme ─────────────────────────────────────────────────────────── */
 html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  color-scheme: dark;
 }
 
-body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 13.5px;
-  line-height: 1.5;
-  min-height: 100vh;
-  overflow-x: hidden;
-  margin: 0;
-  background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.12), transparent);
-  background-attachment: fixed;
+html[data-theme="light"] {
+  color-scheme: light;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  margin: 0;
-  color: var(--text);
-}
-
-p {
-  margin: 0;
-  line-height: 1.5;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
-
-::selection {
-  background: var(--accent);
-  color: #ffffff;
-}
-
+/* ── Core Animations ─────────────────────────────────────────────────────── */
 .spin {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Page enter transition: max 380ms, ease-out, transform and opacity only */
+.page-enter {
+  animation: pageEnter 380ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade up for lists: fade + 12px translateY, staggered 60ms */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 250ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.fade-up-1 { animation-delay: 60ms; }
+.fade-up-2 { animation-delay: 120ms; }
+.fade-up-3 { animation-delay: 180ms; }
+.fade-up-4 { animation-delay: 240ms; }
+.fade-up-5 { animation-delay: 300ms; }
+.fade-up-6 { animation-delay: 360ms; }
+
+/* Scale in for modals and overlays */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 220ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Interaction Utilities ────────────────────────────────────────────────── */
+.hover-lift {
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.hover-lift:hover { transform: translateY(-2px); }
+.hover-lift:active { transform: translateY(0); }
+
+/* ── Grid Layouts ─────────────────────────────────────────────────────────── */
+.studio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1100px) {
+  .studio-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+/* ── Glow / Accent Hover Effects ─────────────────────────────────────────── */
+.glow-indigo:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 16px rgba(255, 107, 74, 0.15) !important;
+}
+
+.glow-pink:hover {
+  border-color: var(--accent-light) !important;
+  box-shadow: 0 4px 16px rgba(255, 133, 102, 0.15) !important;
+}
+
+.glow-cyan:hover {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.15) !important;
+}
+
+.glow-amber:hover {
+  border-color: var(--accent-amber) !important;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15) !important;
+}
+
+.glow-purple:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 16px rgba(255, 107, 74, 0.15) !important;
+}
+
+.glow-emerald:hover {
+  border-color: var(--accent-mint) !important;
+  box-shadow: 0 4px 16px rgba(52, 211, 153, 0.15) !important;
+}
+
+/* ── Dot Pattern Background ───────────────────────────────────────────────── */
+.dot-bg {
+  background-image: radial-gradient(var(--bg-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Prefers Reduced Motion ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

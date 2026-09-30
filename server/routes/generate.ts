@@ -3,7 +3,7 @@ import { aiLimiter, requireAuthOrToken } from "../middleware.js";
 import { generateAICompletion } from "../services/aiProvider.js";
 import { runTitleIntelligencePipeline } from "../services/titleIntelligence.js";
 import { generateDynamicScript } from "../services/scriptIntelligence.js";
-import { runThumbnailIntelligence } from "../services/thumbnailIntelligence.js";
+import { runThumbnailIntelligence, generateViralThumbnailHooks } from "../services/thumbnailIntelligence.js";
 import { generateShortsBlueprint } from "../services/shortsIntelligence.js";
 
 const router = Router();
@@ -51,6 +51,18 @@ router.post("/thumbnail-intelligence", aiLimiter, requireAuthOrToken, async (req
   } catch (err) {
     console.error("Thumbnail intelligence error:", err);
     return res.status(500).json({ error: "Failed to generate thumbnail intelligence." });
+  }
+});
+
+// Dedicated AI Viral Thumbnail Hooks Endpoint
+router.post("/thumbnail-hooks", aiLimiter, requireAuthOrToken, async (req, res) => {
+  const { title, topic } = req.body || {};
+  try {
+    const hooks = await generateViralThumbnailHooks(title || "", topic || "");
+    return res.json({ hooks });
+  } catch (err) {
+    console.error("Thumbnail hooks generation error:", err);
+    return res.status(500).json({ error: "Failed to generate thumbnail hooks." });
   }
 });
 

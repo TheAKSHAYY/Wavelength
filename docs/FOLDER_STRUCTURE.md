@@ -59,7 +59,7 @@ wavelength/
 │   │   ├── CalendarPage.tsx
 │   │   └── AnalyticsPage.tsx
 │   └── styles/
-│       └── app.css            # design-token CSS (vars, layout, components)
+│       └── premium.css        # premium shell CSS (vars, layout, components)
 ├── dist/                        # production client build (npm run build:client)
 ├── data/                        # SQLite database file (wavelength.db)
 ├── .env.example
@@ -108,7 +108,7 @@ One route component per sidebar entry. Each page owns its inputs and renders AI-
 
 #### `styles/`
 
-CSS custom properties (design tokens) and the full component style system in `app.css`.
+CSS custom properties (design tokens) and the full component style system in `premium.css`.
 
 ## File Ownership Guidance
 

@@ -25,25 +25,25 @@ export interface NavGroup {
 
 export const navGroups: NavGroup[] = [
   {
-    label: "Home",
+    label: "Overview",
     items: [
-      { label: "Home", path: "/", icon: LayoutGrid, desc: "Command Center & Next Move", group: "Home" },
+      { label: "Dashboard", path: "/", icon: LayoutGrid, desc: "Command center & active video", group: "Overview" },
+      { label: "Projects Pipeline", path: "/projects", icon: FolderGit2, desc: "All in-progress & filmed videos", group: "Overview" },
     ],
   },
   {
-    label: "Studio",
+    label: "Studios",
     items: [
-      { label: "Shorts Studio", path: "/shorts", icon: Clapperboard, desc: "9:16 vertical short production blueprints", group: "Studio", badge: "HOT" },
-      { label: "Thumbnail Studio", path: "/packaging", icon: Layers, desc: "10-framework titles & synchronized thumbnails", group: "Studio" },
-      { label: "Long-Form Studio", path: "/script", icon: FileText, desc: "Retention-optimized video scripts & beats", group: "Studio" },
+      { label: "Shorts Studio", path: "/shorts", icon: Clapperboard, desc: "9:16 vertical video & hook blueprints", group: "Studios" },
+      { label: "Thumbnail & Titles", path: "/packaging", icon: Layers, desc: "High-CTR title formulas & thumbnail design", group: "Studios" },
+      { label: "Script Studio", path: "/script", icon: FileText, desc: "Retention-structured video scripts", group: "Studios" },
     ],
   },
   {
-    label: "Workspace",
+    label: "Strategy",
     items: [
-      { label: "Projects", path: "/projects", icon: FolderGit2, desc: "Unified idea & video blueprints", group: "Workspace" },
-      { label: "Research", path: "/research", icon: Compass, desc: "Keywords, gaps & audience signals", group: "Workspace" },
-      { label: "Creator Profile", path: "/profile", icon: User, desc: "Master persona, tone & channel memory", group: "Workspace" },
+      { label: "Topic Research", path: "/research", icon: Compass, desc: "Keywords, trends & competitor gaps", group: "Strategy" },
+      { label: "Channel Persona", path: "/profile", icon: User, desc: "Creator identity, tone & channel DNA", group: "Strategy" },
     ],
   },
 ];

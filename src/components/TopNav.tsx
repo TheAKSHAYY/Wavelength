@@ -12,6 +12,10 @@ import {
   Moon,
   Settings,
   User,
+  Clapperboard,
+  FileText,
+  X,
+  Sparkles,
 } from "lucide-react";
 
 interface NotificationItem {
@@ -56,9 +60,12 @@ const cmdItems = allNavItems;
 
 export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
   const navigate = useNavigate();
-  const { user, logout } = useStore();
+  const { user, logout, createProject, setCurrentProject } = useStore();
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newType, setNewType] = useState<"Short" | "Full Video">("Short");
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("wavelength_theme") || "dark";
   });
@@ -72,6 +79,28 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const handleLaunchNewVideo = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newTitle.trim() || (newType === "Short" ? "New Short Video" : "New Full Video");
+    const proj = createProject({
+      title: clean,
+      topic: clean,
+      contentType: newType,
+      language: "English",
+      tone: user?.tone || "Direct & Punchy",
+      targetAudience: user?.target_audience || "YouTube Viewers",
+    });
+    setCurrentProject(proj.id);
+    setCreateModalOpen(false);
+    setNewTitle("");
+
+    if (newType === "Short") {
+      navigate("/shorts", { state: { projectId: proj.id, topic: proj.topic, title: proj.title } });
+    } else {
+      navigate("/packaging", { state: { projectId: proj.id, topic: proj.topic, title: proj.title } });
+    }
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -174,6 +203,72 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
         </div>
 
         <div className="topbar-actions" style={{ position: "relative" }}>
+          {/* Credits remaining in JetBrains Mono */}
+          <div
+            className="hide-on-mobile"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              padding: "5px 10px",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              color: "var(--text-secondary)",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ color: "var(--accent)", fontWeight: 700 }}>42</span> credits
+          </div>
+
+          {/* Plan badge */}
+          <span
+            className="hide-on-mobile"
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(255, 107, 74, 0.12)",
+              color: "var(--accent)",
+              border: "1px solid rgba(255, 107, 74, 0.25)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            PRO
+          </span>
+
+          {/* Upgrade Button */}
+          <a
+            href="/#pricing"
+            className="btn btn-secondary hide-on-mobile"
+            style={{
+              padding: "6px 12px",
+              fontSize: 12,
+              fontWeight: 600,
+              borderRadius: "var(--radius-sm)",
+              textDecoration: "none",
+            }}
+          >
+            Upgrade
+          </a>
+
+          {/* Quick New Video Button (Secondary to avoid competing with page primary CTA) */}
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="btn btn-secondary"
+            style={{
+              padding: "6px 14px",
+              fontSize: "var(--text-xs, 12px)",
+              fontWeight: 600,
+              gap: 6,
+              borderRadius: "var(--radius-sm)",
+            }}
+          >
+            <span>+</span> New Video
+          </button>
+
           {/* Mobile Search Icon */}
           <button
             className="icon-btn show-on-mobile"
@@ -433,6 +528,155 @@ export default function TopNav({ onMenuClick }: { onMenuClick: () => void }) {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick New Video Modal */}
+      {createModalOpen && (
+        <div className="cmd-overlay" onClick={() => setCreateModalOpen(false)}>
+          <div
+            className="cmd-palette"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 540, padding: "26px 28px" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px 0" }}>Start a New Video</h3>
+                <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>
+                  Choose your format and concept to launch the production studio
+                </p>
+              </div>
+              <button
+                className="icon-btn"
+                onClick={() => setCreateModalOpen(false)}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleLaunchNewVideo} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Content Format
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setNewType("Short")}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "var(--radius-md)",
+                      border: newType === "Short" ? "1.5px solid var(--accent)" : "1px solid var(--border)",
+                      background: newType === "Short" ? "rgba(255, 107, 74, 0.12)" : "var(--surface-2)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.18s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: "rgba(255, 107, 74, 0.18)",
+                        color: "var(--accent)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Clapperboard size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text)" }}>Shorts (9:16)</div>
+                      <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>15–60s hook & fast script</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewType("Full Video")}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "var(--radius-md)",
+                      border: newType === "Full Video" ? "1.5px solid var(--accent)" : "1px solid var(--border)",
+                      background: newType === "Full Video" ? "rgba(99, 102, 241, 0.12)" : "var(--surface-2)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.18s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: "rgba(14, 165, 233, 0.2)",
+                        color: "var(--accent-blue)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text)" }}>Full Video (16:9)</div>
+                      <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Long-form & packaging</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Video Topic or Concept
+                </label>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Why Senior Developers Write Less Code"
+                  autoFocus
+                  style={{
+                    width: "100%",
+                    height: 46,
+                    padding: "0 14px",
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setCreateModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ gap: 6 }}
+                >
+                  <Sparkles size={14} /> Launch Studio →
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

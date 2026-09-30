@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Wavelength Landing Page — Design System
+   NO gradients · NO glow · NO glassmorphism · Coral accent only on CTAs
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ── Tokens ──────────────────────────────────────────────────────────────── */
+.wl-landing {
+  --wl-bg:           #0B0B0F;
+  --wl-surface:      #14141A;
+  --wl-elevated:     #1C1C24;
+  --wl-border:       #2A2A35;
+  --wl-accent:       #FF6B4A;
+  --wl-accent-hover: #FF8566;
+  --wl-text:         #F5F5F7;
+  --wl-muted:        #9A9AA8;
+  --wl-success:      #34D399;
+  --wl-warning:      #FBBF24;
+  --wl-error:        #F87171;
+
+  background: var(--wl-bg);
+  color: var(--wl-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override app-level heading font */
+.wl-landing h1,
+.wl-landing h2,
+.wl-landing h3,
+.wl-landing h4,
+.wl-landing h5 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--wl-text);
+  /* Override app's text-fill-color if set */
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  background-clip: unset;
+  -webkit-background-clip: unset;
+}
+
+.wl-landing p { margin: 0; }
+
+.wl-landing a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Mono utility ─────────────────────────────────────────────────────────── */
+.wl-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── Container & sections ─────────────────────────────────────────────────── */
+.wl-container {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.wl-section {
+  padding: 120px 0;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+.wl-landing::-webkit-scrollbar { width: 4px; }
+.wl-landing::-webkit-scrollbar-track { background: var(--wl-bg); }
+.wl-landing::-webkit-scrollbar-thumb {
+  background: var(--wl-border);
+  border-radius: 2px;
+}
+
+/* ── Focus visible ────────────────────────────────────────────────────────── */
+.wl-landing *:focus-visible {
+  outline: 2px solid var(--wl-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Prefers-reduced-motion ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wl-landing *,
+  .wl-landing *::before,
+  .wl-landing *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.wl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+
+.wl-btn-primary {
+  background: var(--wl-accent);
+  color: #fff;
+  border-color: var(--wl-accent);
+}
+
+.wl-btn-primary:hover {
+  background: var(--wl-accent-hover);
+  border-color: var(--wl-accent-hover);
+}
+
+.wl-btn-ghost {
+  background: transparent;
+  color: var(--wl-muted);
+  border-color: var(--wl-border);
+}
+
+.wl-btn-ghost:hover {
+  color: var(--wl-text);
+  border-color: var(--wl-muted);
+}
+
+.wl-btn-lg {
+  padding: 13px 28px;
+  font-size: 15px;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.wl-card {
+  background: var(--wl-surface);
+  border: 1px solid var(--wl-border);
+  border-radius: 12px;
+}
+
+.wl-card-elevated {
+  background: var(--wl-elevated);
+  border: 1px solid var(--wl-border);
+  border-radius: 12px;
+}
+
+/* ── FAQ accordion ────────────────────────────────────────────────────────── */
+.wl-accordion-item {
+  border-bottom: 1px solid var(--wl-border);
+}
+
+.wl-accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0;
+  background: none;
+  border: none;
+  color: var(--wl-text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  text-align: left;
+  gap: 16px;
+  transition: color 150ms ease;
+}
+
+.wl-accordion-trigger:hover {
+  color: var(--wl-muted);
+}
+
+.wl-accordion-content {
+  overflow: hidden;
+  padding-bottom: 24px;
+  color: var(--wl-muted);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 680px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .wl-section { padding: 72px 0; }
+  .wl-container { padding: 0 16px; }
+
+  .wl-landing h1 { font-size: 36px !important; }
+  .wl-landing h2 { font-size: 28px !important; }
+}

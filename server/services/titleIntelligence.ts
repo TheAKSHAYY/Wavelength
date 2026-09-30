@@ -144,6 +144,19 @@ export async function performTopicResearch(semantic: SemanticTopic): Promise<{
   }
 }
 
+export const PSYCHOLOGICAL_FRAMEWORKS = [
+  "Curiosity Gap",
+  "Beginner Pain Point",
+  "Contrarian",
+  "Mistakes to Avoid",
+  "Structured Roadmap",
+  "Personal Proof",
+  "80/20 Rule",
+  "Transformation",
+  "Strategic Decision",
+  "Vulnerable Story",
+] as const;
+
 /**
  * 3. AI-POWERED TITLE INTELLIGENCE RUNNER
  * Generates 10 distinct, creator-grade titles across 10 psychological frameworks for ANY topic,
@@ -246,8 +259,13 @@ CRITICAL RULES:
   }
 
   const validatedTitles: TitleCandidate[] = rawList.map((t: any, idx: number) => {
-    const titleText = typeof t === "string" ? t : (t.title || t.name || t.text || "");
-    const score = typeof t.score === "number" ? Math.min(98, Math.max(70, t.score)) : 90 - idx * 2;
+    const frameworkName = PSYCHOLOGICAL_FRAMEWORKS[idx % PSYCHOLOGICAL_FRAMEWORKS.length];
+    const rawTitleText = typeof t === "string" ? t : (t.title || t.name || t.text || t.headline || "");
+    const cleanTitle = rawTitleText && rawTitleText !== `Mastering ${semantic.cleanSubject}`
+      ? rawTitleText
+      : `${frameworkName}: ${semantic.cleanSubject}`;
+
+    const score = typeof t.score === "number" ? Math.min(98, Math.max(70, t.score)) : 94 - idx * 2;
     const ctrPotential =
       t.ctrPotential && ["Very High", "High", "Medium", "Low"].includes(t.ctrPotential)
         ? t.ctrPotential
@@ -261,12 +279,12 @@ CRITICAL RULES:
 
     return {
       rank: idx + 1,
-      title: String(titleText || `Mastering ${semantic.cleanSubject}`).trim(),
-      angle: String(t.angle || "Core Guide").trim(),
+      title: String(cleanTitle).trim(),
+      angle: String(t.angle || frameworkName).trim(),
       ctrPotential,
       score,
-      whyItWorks: String(t.whyItWorks || "Hooks viewer curiosity with clear value proposition.").trim(),
-      framework: String(t.framework || `Framework ${idx + 1}`).trim(),
+      whyItWorks: String(t.whyItWorks || `Hooks viewer curiosity using proven ${frameworkName} psychological trigger.`).trim(),
+      framework: String(t.framework || frameworkName).trim(),
     };
   });
 

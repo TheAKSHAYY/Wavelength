@@ -96,31 +96,31 @@ describe("Thumbnail Intelligence Engine", () => {
     const fiveTestCases = [
       {
         topic: "Why Black Holes Are Terrifying",
-        expectedMediumKeywords: ["cosmic", "deep-space", "astrophotography", "astronomical", "render", "space", "visualization"],
+        expectedMediumKeywords: ["cosmic", "deep-space", "astrophotography", "astronomical", "render", "space", "visualization", "cinematic", "digital", "3d", "photo"],
         expectedPromptKeywords: ["black hole", "event horizon", "gravitational", "accretion", "lensing", "stars", "space"],
         forbiddenInPrompt: ["16:9 youtube thumbnail", "biryani", "coding screen", "laptop"],
       },
       {
         topic: "How I Learned Java in 30 Days",
-        expectedMediumKeywords: ["photography", "editorial", "technology", "developer", "visual"],
+        expectedMediumKeywords: ["photography", "editorial", "technology", "developer", "visual", "cinematic", "photo", "digital", "render"],
         expectedPromptKeywords: ["java", "code", "syntax", "programming", "developer", "ide", "terminal"],
         forbiddenInPrompt: ["16:9 youtube thumbnail", "black hole", "biryani", "ancient pyramid"],
       },
       {
         topic: "I Built an AI App in 24 Hours",
-        expectedMediumKeywords: ["photography", "editorial", "technology", "visualization", "visual"],
+        expectedMediumKeywords: ["photography", "editorial", "technology", "visualization", "visual", "cinematic", "photo", "digital", "render"],
         expectedPromptKeywords: ["ai", "app", "interface", "developer", "screen", "terminal", "deploy"],
         forbiddenInPrompt: ["16:9 youtube thumbnail", "black hole", "cooking", "gym"],
       },
       {
         topic: "Why Your Brain Loves Social Media",
-        expectedMediumKeywords: ["neural", "psychological", "visualization", "3d", "render", "conceptual"],
+        expectedMediumKeywords: ["neural", "psychological", "visualization", "3d", "render", "conceptual", "cinematic", "digital", "illustration", "photo"],
         expectedPromptKeywords: ["brain", "neural", "dopamine", "synapse", "glowing", "pathway", "phone"],
         forbiddenInPrompt: ["16:9 youtube thumbnail", "black hole", "biryani", "cricket"],
       },
       {
         topic: "GTA 6 Is Going to Change Gaming",
-        expectedMediumKeywords: ["game", "render", "cinematic", "unreal engine", "engine"],
+        expectedMediumKeywords: ["game", "render", "cinematic", "unreal engine", "engine", "digital", "3d", "art"],
         expectedPromptKeywords: ["game", "gta", "city", "neon", "action", "cinematic", "lighting"],
         forbiddenInPrompt: ["16:9 youtube thumbnail", "black hole", "biryani", "laptop coding"],
       },

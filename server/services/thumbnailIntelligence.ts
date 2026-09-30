@@ -46,6 +46,8 @@ export interface ThumbnailTextStrategy {
   textStroke: string;
   dropShadow: string;
   lineBreakIndex?: number;
+  fontFamily?: "Anton" | "Bebas Neue" | "Montserrat" | string;
+  suggestedHooks?: string[];
 }
 
 export interface ThumbnailVisualBlueprint {
@@ -239,6 +241,28 @@ export function deriveDomainVisualMedium(topicOrTitle: string): string {
  * Ensures the primary subject is framed to leave clear negative space for thumbnail text.
  * Strictly avoids generic token pollution such as "16:9 YouTube thumbnail photography".
  */
+function getNaturalLightingWords(primaryHex: string, accentHex: string): string {
+  const p = (primaryHex || "").replace("#", "").toLowerCase();
+  if (p.startsWith("38") || p.startsWith("3b") || p.startsWith("0")) {
+    return "electric cyan and warm amber dual rim lighting, dark atmospheric studio glow";
+  }
+  if (p.startsWith("ff") || p.startsWith("f5")) {
+    return "intense golden neon rim highlights, deep contrasting shadows";
+  }
+  if (p.startsWith("ef") || p.startsWith("e5")) {
+    return "dramatic crimson red backlight, sharp cinematic contrast";
+  }
+  if (p.startsWith("10") || p.startsWith("22")) {
+    return "vibrant emerald neon rim light with atmospheric haze";
+  }
+  return "dramatic volumetric rim lighting, deep contrast shadows, punchy cinematic illumination";
+}
+
+/**
+ * Builds a clean, YouTube-optimized engine prompt designed specifically for the chosen layout.
+ * Ensures the primary subject is framed to leave clear negative space for thumbnail text.
+ * Strictly avoids generic token pollution or negative prompt leakage into the positive prompt.
+ */
 export function buildEnginePromptFromLayout(
   story: ThumbnailVisualStory,
   blueprint: ThumbnailVisualBlueprint,
@@ -247,42 +271,55 @@ export function buildEnginePromptFromLayout(
   _titleOrTopic: string,
   negativeAvoids: string[]
 ): string {
-  let framingInstruction = "";
+  // Strip out any text references, price tags, or meta instructions from subject & narrative
+  const cleanSubject = (story.primaryFocalSubject || "hero subject")
+    .replace(/price tag[^,.]*/gi, "")
+    .replace(/showing ['"][^'"]*['"]/gi, "")
+    .replace(/with text[^,.]*/gi, "")
+    .replace(/clean uncluttered/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  switch (layout) {
-    case "LEFT_TEXT_RIGHT_SUBJECT":
-      framingInstruction = "Position the primary focal subject dynamically on the right half of the frame (60% width), leaving generous, clean negative space with soft atmospheric background on the left side (40% width) for text overlay.";
-      break;
-    case "RIGHT_TEXT_LEFT_SUBJECT":
-      framingInstruction = "Position the primary focal subject dynamically on the left half of the frame (60% width), leaving clean negative space with soft atmospheric background on the right side (40% width) for text overlay.";
-      break;
-    case "CENTER_SUBJECT":
-      framingInstruction = "Center the primary hero subject prominently with high visual hierarchy, framed by shallow depth of field and soft background separation.";
-      break;
-    case "SPLIT_COMPARISON":
-      framingInstruction = "Distinct 50/50 vertical split-screen comparison composition with contrasting lighting tones on each side, sharp vertical energy division.";
-      break;
-    case "TOP_TEXT_BOTTOM_SUBJECT":
-      framingInstruction = "Frame the primary focal subject across the lower two-thirds of the image, keeping the top one-third clean and uncluttered with dark atmospheric breathing room.";
-      break;
-    case "FULL_BLEED_SUBJECT_WITH_NEGATIVE_SPACE":
-    default:
-      framingInstruction = "Dynamic hero framing with high focal clarity on the primary subject and extreme foreground-to-background separation.";
-      break;
-  }
-
-  const secondaryStr = story.secondaryElements && story.secondaryElements.length > 0
-    ? `Supporting context: ${story.secondaryElements.join(", ")}.`
-    : "";
+  const cleanNarrative = (story.narrative || "")
+    .replace(/price tag[^,.]*/gi, "")
+    .replace(/showing ['"][^'"]*['"]/gi, "")
+    .replace(/with text[^,.]*/gi, "")
+    .replace(/clean uncluttered/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const medium = blueprint.visualMedium || deriveDomainVisualMedium(_titleOrTopic);
-  const lighting = blueprint.lightingScheme || `Directional rim lighting with bold color harmony (${colorDir.primary} and ${colorDir.accent})`;
-  const camera = blueprint.cameraFraming || "Cinematic perspective with extreme focal depth";
-  const style = blueprint.visualStyle || "High dynamic range, crisp focal clarity, cinematic depth";
-  const tone = blueprint.emotionalTone || "High intrigue and visual engagement";
-  const env = blueprint.environment || story.backgroundEnvironment;
+  const naturalLighting = getNaturalLightingWords(colorDir.primary, colorDir.accent);
+  const lighting = blueprint.lightingScheme && !blueprint.lightingScheme.includes("#")
+    ? blueprint.lightingScheme
+    : naturalLighting;
+  const env = blueprint.environment || story.backgroundEnvironment || "cinematic studio environment";
 
-  return `${medium} of ${story.primaryFocalSubject}. ${story.narrative} in ${env}. ${secondaryStr} Composition: ${framingInstruction} Camera & Angle: ${camera}. Lighting: ${lighting}. Visual Style: ${style}, ${tone}. Compositional mandate: Clean negative space reserved for typography overlay. ZERO embedded text, no letters, no watermarks.`.trim();
+  const cleanSecondary = (story.secondaryElements || [])
+    .filter(
+      (s) =>
+        !s.toLowerCase().includes("text") &&
+        !s.toLowerCase().includes("tag") &&
+        !s.toLowerCase().includes("words") &&
+        !s.toLowerCase().includes("label")
+    )
+    .join(", ");
+
+  const secondaryStr = cleanSecondary ? `featuring ${cleanSecondary}` : "";
+
+  // Precise composition positioning hint without confusing negative space words
+  let framing = "hero subject prominent in dynamic perspective";
+  if (layout === "LEFT_TEXT_RIGHT_SUBJECT") {
+    framing = "hero subject prominently positioned on the right side of frame";
+  } else if (layout === "RIGHT_TEXT_LEFT_SUBJECT") {
+    framing = "hero subject prominently positioned on the left side of frame";
+  } else if (layout === "CENTER_SUBJECT") {
+    framing = "bold centered hero subject in sharp focus";
+  } else if (layout === "SPLIT_COMPARISON") {
+    framing = "dramatic split-screen comparative lighting and framing";
+  }
+
+  return `Vivid high-contrast ${medium} of ${cleanSubject}. ${cleanNarrative}. Set in ${env}. ${secondaryStr}. ${framing}, ${lighting}, sharp crisp focal clarity, punchy vibrant saturated colors, 8k resolution, dramatic commercial YouTube thumbnail photography, no text, no watermarks, no blur, masterpiece quality.`.replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -296,13 +333,18 @@ export function buildNegativePrompt(customAvoids: string[] = []): string {
     "typography",
     "watermarks",
     "logos",
-    "fake UI cards",
+    "fonts",
+    "signature",
+    "labels",
+    "dull lighting",
     "blurry artifacts",
     "distorted anatomy",
     "duplicate subjects",
     "stock photo cliches",
     "visual clutter",
     "distorted faces",
+    "low resolution",
+    "amateur photo",
   ];
   return Array.from(new Set([...customAvoids, ...baseAvoids])).join(", ");
 }
@@ -483,12 +525,19 @@ Output ONLY valid JSON adhering strictly to this schema:
   },
   "layout": "LEFT_TEXT_RIGHT_SUBJECT" | "RIGHT_TEXT_LEFT_SUBJECT" | "CENTER_SUBJECT" | "SPLIT_COMPARISON" | "TOP_TEXT_BOTTOM_SUBJECT" | "FULL_BLEED_SUBJECT_WITH_NEGATIVE_SPACE",
   "textStrategy": {
-    "overlayText": "string (1-4 PUNCHY WORDS IN ALL CAPS, e.g. 'WHAT\\'S INSIDE?')",
-    "layoutZone": "left" | "right" | "top" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right",
-    "textColor": "#HEX (Vibrant readable color, e.g. '#FFE600' or '#FFFFFF')",
-    "pillColor": "#HEX (Optional semi-transparent pill color or '#E50914')",
-    "textStroke": "4px #000000",
-    "dropShadow": "0 8px 24px rgba(0,0,0,0.85)"
+    "overlayText": "string (1-3 PUNCHY WORDS IN ALL CAPS, e.g. 'DON\\'T BUY THIS' or 'UNDER $1000')",
+    "suggestedHooks": [
+      "string (Curiosity hook: 1-3 words in ALL CAPS)",
+      "string (Warning hook: 1-3 words in ALL CAPS)",
+      "string (Result hook: 1-3 words in ALL CAPS)",
+      "string (Intrigue hook: 1-3 words in ALL CAPS)"
+    ],
+    "layoutZone": "left" | "right" | "top" | "top-left" | "top-right",
+    "textColor": "#HEX (Vibrant readable color, e.g. '#FFE600' or '#FF2A54' or '#00F0FF')",
+    "pillColor": "rgba(0, 0, 0, 0.85)",
+    "textStroke": "3.5px #000000",
+    "dropShadow": "0 8px 24px rgba(0,0,0,0.85)",
+    "fontFamily": "Anton" | "Bebas Neue" | "Montserrat"
   },
   "colorDirection": {
     "primary": "#HEX (Vibrant subject accent)",
@@ -605,15 +654,47 @@ Output ONLY valid JSON adhering strictly to this schema:
     rawOverlay = "WHAT HAPPENED?";
   }
 
+  // Extract model suggested hooks or fallback to domain hooks
+  const topicLower = (title || topic).toLowerCase();
+  const hookCandidates: string[] = [];
+  if (rawOverlay && rawOverlay !== "WATCH THIS" && rawOverlay !== "WHAT HAPPENED?") {
+    hookCandidates.push(rawOverlay);
+  }
+
+  if (Array.isArray(parsed.textStrategy?.suggestedHooks)) {
+    for (const h of parsed.textStrategy.suggestedHooks) {
+      const cleanH = String(h || "").trim().toUpperCase();
+      if (cleanH && cleanH.split(/\s+/).length <= 4 && cleanH !== title.toUpperCase()) {
+        hookCandidates.push(cleanH);
+      }
+    }
+  }
+
+  // Domain-specific fallbacks if model provided fewer than 4 hooks
+  const domainFallbacks = getDomainFallbackHooks(title || topic);
+  for (const dh of domainFallbacks) {
+    if (hookCandidates.length >= 4) break;
+    if (!hookCandidates.includes(dh)) {
+      hookCandidates.push(dh);
+    }
+  }
+
+  const suggestedHooks = Array.from(new Set(hookCandidates)).slice(0, 4);
+  const activeOverlay = rawOverlay || suggestedHooks[0] || "MUST WATCH";
+  const rawFont = parsed.textStrategy?.fontFamily;
+  const validFont = rawFont === "Bebas Neue" || rawFont === "Montserrat" ? rawFont : "Anton";
+
   const textStrategy: ThumbnailTextStrategy = {
-    overlayText: rawOverlay,
-    characterCount: rawOverlay.length,
-    wordCount: rawOverlay.split(/\s+/).filter(Boolean).length,
+    overlayText: activeOverlay,
+    characterCount: activeOverlay.length,
+    wordCount: activeOverlay.split(/\s+/).filter(Boolean).length,
     layoutZone,
     textColor: parsed.textStrategy?.textColor || "#FFE600",
-    pillColor: parsed.textStrategy?.pillColor || "rgba(0, 0, 0, 0.78)",
-    textStroke: parsed.textStrategy?.textStroke || "4px #000000",
+    pillColor: parsed.textStrategy?.pillColor || "rgba(0, 0, 0, 0.82)",
+    textStroke: parsed.textStrategy?.textStroke || "3.5px #000000",
     dropShadow: parsed.textStrategy?.dropShadow || "0 8px 24px rgba(0,0,0,0.85)",
+    fontFamily: validFont,
+    suggestedHooks,
   };
 
   const colorDirection = {
@@ -702,4 +783,70 @@ Output ONLY valid JSON adhering strictly to this schema:
     ],
     visualRelevanceScore: 95,
   };
+}
+
+/**
+ * Returns 4 punchy, high-CTR viral hooks based on topic domain.
+ */
+export function getDomainFallbackHooks(topicOrTitle: string): string[] {
+  const lower = (topicOrTitle || "").toLowerCase();
+  if (lower.includes("pc") || lower.includes("gaming") || lower.includes("hardware") || lower.includes("gpu") || lower.includes("build")) {
+    return ["UNDER $1000", "DON'T BUY THIS", "144 FPS BEAST", "BIG MISTAKE"];
+  }
+  if (lower.includes("food") || lower.includes("recipe") || lower.includes("biryani") || lower.includes("cook") || lower.includes("kitchen")) {
+    return ["SECRET TASTE", "100-YEAR TRICK", "STOP COOKING THIS", "NEVER DO THIS"];
+  }
+  if (lower.includes("fitness") || lower.includes("gym") || lower.includes("workout") || lower.includes("diet") || lower.includes("muscle")) {
+    return ["NEVER DO THIS", "1% BULK SECRET", "GET LEAN FAST", "WASTING TIME?"];
+  }
+  if (lower.includes("cricket") || lower.includes("ipl") || lower.includes("match") || lower.includes("sports")) {
+    return ["HOW THEY WON", "UNNOTICED MOVE", "THE TURNING POINT", "WHAT HAPPENED?"];
+  }
+  if (lower.includes("money") || lower.includes("finance") || lower.includes("invest") || lower.includes("crypto") || lower.includes("stock")) {
+    return ["WHY YOU'RE BROKE", "THE 1-YEAR TRICK", "DO NOT INVEST", "THE REAL COST"];
+  }
+  if (lower.includes("code") || lower.includes("developer") || lower.includes("programming") || lower.includes("ai") || lower.includes("software")) {
+    return ["THIS REPLACES YOU", "DON'T LEARN THIS", "10X FASTER", "GAME OVER?"];
+  }
+  return ["THE REAL TRUTH", "DON'T BUY THIS", "WHAT HAPPENED?", "MUST WATCH"];
+}
+
+/**
+ * Generates fresh 1-3 word viral thumbnail hooks on demand using AI.
+ */
+export async function generateViralThumbnailHooks(title: string, topic: string): Promise<string[]> {
+  const cleanT = cleanInput(title || topic || "Video");
+  try {
+    const aiResult = await generateAICompletion({
+      system: `You are a world-class YouTube thumbnail copywriter and packaging strategist.
+Generate exactly 4 ultra-punchy, 1-3 word thumbnail text hooks in ALL CAPS that maximize click-through rate (CTR).
+Styles required:
+1. Curiosity / Intrigue (e.g. 'WHAT HAPPENED?', 'THE REAL TRUTH')
+2. Warning / Stakes (e.g. 'DON'T BUY THIS', 'BIG MISTAKE')
+3. High Value / Result (e.g. 'UNDER $1000', '10X FASTER')
+4. Secret / Revelation (e.g. 'SECRET EXPOSED', 'NEVER SEEN')
+Rules:
+- NEVER repeat the title.
+- Each hook must be 1-3 words only.
+- Output ONLY valid JSON array containing exactly 4 strings.`,
+      prompt: `Title: "${cleanT}"\nTopic: "${cleanInput(topic || title || "Creator Video")}"`,
+      temperature: 0.7,
+      maxTokens: 300,
+      jsonMode: true,
+    });
+
+    if (aiResult?.text) {
+      const parsed = JSON.parse(aiResult.text.replace(/```(?:json)?/gi, "").trim());
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+          .map((s: any) => String(s || "").toUpperCase().trim())
+          .filter((s: string) => s.length > 0 && s.split(/\s+/).length <= 4)
+          .slice(0, 4);
+      }
+    }
+  } catch (err) {
+    console.warn("generateViralThumbnailHooks AI call failed, using domain fallbacks:", err);
+  }
+
+  return getDomainFallbackHooks(cleanT);
 }

@@ -343,7 +343,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Quick Actions */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               {youtubeChannelId && (
                 <a
                   href={`https://youtube.com/channel/${youtubeChannelId}`}

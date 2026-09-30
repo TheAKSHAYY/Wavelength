@@ -212,20 +212,24 @@ export default function ImageGeneratorPage() {
     }
     const textColor  = blueprint?.textStrategy?.textColor  || "#FFE600";
     const pillColor  = blueprint?.textStrategy?.pillColor  || "rgba(0,0,0,0.82)";
-    const fontSize   = wordCount <= 2 ? "clamp(24px,5vw,56px)" : "clamp(18px,3.8vw,42px)";
+    const fontSize   = wordCount <= 2 ? "clamp(26px,5.2vw,56px)" : "clamp(18px,3.8vw,42px)";
     const textStyle: React.CSSProperties = {
-      fontFamily: "Impact, var(--font-display), 'Montserrat', sans-serif",
-      fontSize, fontWeight: 900, lineHeight: 0.95,
-      letterSpacing: "0.04em", textTransform: "uppercase",
-      textShadow: "0 3px 8px rgba(0,0,0,0.95)", WebkitTextStroke: "1px #000000",
+      fontFamily: "'Anton', 'Bebas Neue', 'Montserrat', Impact, sans-serif",
+      fontSize, fontWeight: 900, lineHeight: 0.92,
+      letterSpacing: "0.03em", textTransform: "uppercase",
+      textShadow: "0 2px 10px rgba(0,0,0,0.9)",
+      WebkitTextStroke: "3px #000000",
+      paintOrder: "stroke fill",
+      filter: "drop-shadow(0 4px 0 #000000) drop-shadow(0 8px 18px rgba(0,0,0,0.95))",
     };
     return (
-      <div style={containerStyle}>
+      <div style={{ ...containerStyle, transform: "rotate(-2deg)" }}>
         <div style={{ background: pillColor, padding: "8px 18px", borderRadius: 10,
-          boxShadow: "0 12px 36px rgba(0,0,0,0.9),0 0 0 2px rgba(255,255,255,0.15)",
-          backdropFilter: "blur(4px)", display: "inline-flex", flexDirection: "column" }}>
-          <span style={{ ...textStyle, color: textColor }}>{line1}</span>
-          {line2 && <span style={{ ...textStyle, color: "#FFFFFF", marginTop: 4 }}>{line2}</span>}
+          boxShadow: "0 16px 36px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6)",
+          border: "1.5px solid rgba(255,255,255,0.2)",
+          backdropFilter: "blur(6px)", display: "inline-flex", flexDirection: "column" }}>
+          <span style={{ ...textStyle, color: line2 ? "#FFFFFF" : textColor }}>{line1}</span>
+          {line2 && <span style={{ ...textStyle, color: textColor, marginTop: 4 }}>{line2}</span>}
         </div>
       </div>
     );
@@ -545,37 +549,37 @@ export default function ImageGeneratorPage() {
                   <ShieldCheck size={16} color="var(--accent-mint)" />
                   <span className="text-token-sm font-bold text-token-text">Thumbnail Creative Direction</span>
                   {blueprint.objective?.type && (
-                    <Badge variant="warning">🎯 {blueprint.objective.type}</Badge>
+                    <Badge variant="warning">{blueprint.objective.type}</Badge>
                   )}
                 </div>
                 {blueprint.layout && (
-                  <Badge variant="accent">📐 {blueprint.layout.replace(/_/g, " ")}</Badge>
+                  <Badge variant="accent">{blueprint.layout.replace(/_/g, " ")}</Badge>
                 )}
               </div>
 
               {/* 1-Second Promise */}
               {blueprint.objective?.oneSecondPromise && (
                 <div className="text-token-sm text-token-text bg-[rgba(56,189,248,0.08)] p-token-3 rounded-token-sm border-l-2 border-[var(--accent-blue)]">
-                  ⚡ <strong>1-Second Viewer Promise:</strong> "{blueprint.objective.oneSecondPromise}"
+                  <strong>1-Second Viewer Promise:</strong> "{blueprint.objective.oneSecondPromise}"
                 </div>
               )}
 
               {/* Visual Story */}
               {getStoryNarrative() && (
                 <div className="text-token-sm text-token-text-secondary bg-token-surface-2 p-token-3 rounded-token-md border border-token-border leading-relaxed">
-                  📖 <strong>Visual Story:</strong> {getStoryNarrative()}
+                  <strong>Visual Story:</strong> {getStoryNarrative()}
                 </div>
               )}
 
               {/* Detail grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-token-2">
                 {[
-                  { emoji: "🎯", label: "FOCAL SUBJECT",  value: getFocalSubject() || "Central hero" },
-                  { emoji: "🏞️", label: "ENVIRONMENT",    value: getEnvironment()  || "Authentic setting" },
-                  { emoji: "🔤", label: "HOOK TEXT",       value: blueprint.textStrategy?.overlayText || blueprint.overlayText || "—" },
-                ].map(({ emoji, label, value }) => (
+                  { label: "FOCAL SUBJECT",  value: getFocalSubject() || "Central hero" },
+                  { label: "ENVIRONMENT",    value: getEnvironment()  || "Authentic setting" },
+                  { label: "HOOK TEXT",       value: blueprint.textStrategy?.overlayText || blueprint.overlayText || "—" },
+                ].map(({ label, value }) => (
                   <div key={label} className="bg-token-surface-2 p-token-3 rounded-token-md border border-token-border">
-                    <div className="text-token-xs font-bold text-token-text-muted uppercase tracking-wide mb-token-1">{emoji} {label}</div>
+                    <div className="text-token-xs font-bold text-token-text-muted uppercase tracking-wide mb-token-1">{label}</div>
                     <div className="text-token-sm text-token-text-secondary leading-snug">{value}</div>
                   </div>
                 ))}
@@ -585,7 +589,7 @@ export default function ImageGeneratorPage() {
               {blueprint.qa && (
                 <div className="bg-token-surface-2 p-token-3 rounded-token-md border border-token-border">
                   <div className="flex justify-between items-center mb-token-2">
-                    <span className="text-token-xs font-bold text-token-text-muted uppercase tracking-wide">🛡️ QA Checklist</span>
+                    <span className="text-token-xs font-bold text-token-text-muted uppercase tracking-wide">QA Checklist</span>
                     <Badge variant="success">{blueprint.qa.overallVerdict}</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-token-2">

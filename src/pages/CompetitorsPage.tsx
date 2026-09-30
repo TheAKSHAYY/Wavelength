@@ -174,7 +174,7 @@ Analyze the given YouTube channel and output ONLY a valid JSON object matching t
               {/* Column 1: What They Cover */}
               <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8 }}>
-                  📌 What They Cover
+                  What They Cover
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5, color: "var(--text-secondary)" }}>
                   {(c.whatTheyCover || c.contentThemes || []).map((th: string, idx: number) => (
@@ -189,7 +189,7 @@ Analyze the given YouTube channel and output ONLY a valid JSON object matching t
               {/* Column 2: What They Rarely Cover (Gaps) */}
               <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-amber, #fbbf24)", textTransform: "uppercase", marginBottom: 8 }}>
-                  ⚠️ What They Rarely Cover (Gaps)
+                  What They Rarely Cover (Gaps)
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5, color: "var(--text-secondary)" }}>
                   {(c.whatTheyRarelyCover || [c.gap] || []).filter(Boolean).map((gap: string, idx: number) => (
@@ -204,7 +204,7 @@ Analyze the given YouTube channel and output ONLY a valid JSON object matching t
               {/* Column 3: Wavelength Opportunities */}
               <div style={{ background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.25)", padding: 14, borderRadius: "var(--radius-md)" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-primary, #38bdf8)", textTransform: "uppercase", marginBottom: 8 }}>
-                  💡 Opportunities For You
+                  Opportunities For You
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {(c.opportunitiesForYou || [{ angle: c.gap || "Practical step-by-step breakdown", whyItWorks: "Audience seeks tactical depth" }]).map((opp: any, idx: number) => (

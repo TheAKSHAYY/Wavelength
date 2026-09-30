@@ -1,109 +1,123 @@
-# Wavelength — AI YouTube Growth & Content Strategy Dashboard
+# Wavelength — Creator Studio
 
-An AI-powered creator platform for YouTube creators and strategists: deep trend discovery, competitor intelligence, keyword research, psychological title generation across 10 frameworks, multilingual script drafting (English, Hindi, Hinglish), a professional **YouTube Thumbnail Design Studio**, and a complete one-click content package synthesizer.
+A creator tool for Indian YouTube creators with two products:
 
-Powered by a resilient **Google Gemini Multi-Model Cascade** (`gemini-3.5-flash` → `gemini-3.5-flash-lite` → `gemini-3.6-flash` → `gemini-3.7-flash`), with support for Groq, OpenRouter, OpenAI, and live YouTube Data API benchmarks.
-
----
-
-## What Wavelength Includes
-
-- **Professional YouTube Thumbnail Design Studio**:
-  - Semantic content understanding & 1-second viewer promise analysis.
-  - 12 psychological thumbnail objectives (Curiosity, Warning, Transformation, Discovery, etc.).
-  - 6 dynamic composition layouts (`LEFT_TEXT_RIGHT_SUBJECT`, `RIGHT_TEXT_LEFT_SUBJECT`, `SPLIT_COMPARISON`, etc.).
-  - High-CTR text strategy (1–4 punchy words, never duplicating the video title).
-  - Separate dynamic text overlay scaling & positioning engine on a 16:9 canvas.
-  - Zero-embedded-text image generation via Pollinations FLUX (1280x720 16:9 HD) and Google Imagen 3.
-  - Real-time automated Thumbnail QA validation (Focal point clarity, story immediacy, text brevity, mobile legibility, and non-inventive accuracy).
-- **10-Framework Title Intelligence**:
-  - Generates psychological, high-CTR titles across Curiosity Gap, Negative Contrast, Direct Benefit, Speedrun, Extreme Stakes, Identity Callout, Secret Revelation, etc., complete with CTR scores and virality triggers.
-- **Multilingual Script Intelligence**:
-  - Generates retention-optimized YouTube scripts with 0–15s hooks, pattern interrupts, retention beats, and engagement CTAs in natural English, Hindi (Devanagari), and creator Hinglish.
-- **Multi-Model AI Resilience**:
-  - Built-in multi-model fallback cascade with exponential backoff and rate-limit recovery.
-  - **Zero Silent Mock Fallbacks**: Real error states are surfaced if the AI pipeline fails rather than returning fake generic coding mock data.
-- **AI Channel Strategist Chat**:
-  - Multi-turn creator consultant for video brainstorming, packaging advice, and channel roadmapping.
-- **Full Creator Dashboard**:
-  - React 18 + Vite 6 + TypeScript frontend with lazy-loaded routes and responsive navigation.
-  - Express + TypeScript backend proxying AI requests securely.
-  - Server-side SQLite persistence (`better-sqlite3` + `node:sqlite`) for per-user settings, ideas, and content state.
-  - Authentication with scrypt-hashed passwords and secure httpOnly JWT cookies.
+- **Thumbnail Studio** — upload a thumbnail and get a CTR prediction score (0–10), WCAG AA contrast check, and face visibility detection.
+- **Shorts Studio** — paste a topic and get 3 hook variants plus a 3-scene storyboard, in English, Hindi, or Hinglish.
 
 ---
 
-## Setup & Quick Start
+## Stack
 
-### 1. Install Dependencies
-
-```bash
-npm install
-```
-
-### 2. Configure Environment
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and configure your API keys:
-
-```env
-# Primary AI Provider (Google Gemini Recommended)
-GEMINI_API_KEY=AIzaSy...
-GEMINI_MODEL=gemini-3.5-flash
-
-# Optional Providers
-OPENAI_API_KEY=sk-...
-GROQ_API_KEY=gsk_...
-YOUTUBE_API_KEY=AIzaSy...
-
-# Security
-JWT_SECRET=<long-random-string>
-PORT=4180
-```
-
-### 3. Seed Development Account (Optional)
-
-```bash
-npm run seed:dev
-```
-Creates dev login credentials: `admin@wavelength.local` / `password123`.
-
-### 4. Run Development Servers
-
-```bash
-npm run dev
-```
-Starts backend server on port `4180` and Vite dev client on `http://localhost:5173`.
-
----
-
-## Available Scripts
-
-| Command | Description |
+| Layer | Technology |
 |---|---|
-| `npm run dev` | Runs backend + frontend concurrently in development mode |
-| `npm run dev:server` | Runs Express backend with live TypeScript reload (`tsx watch`) |
-| `npm run dev:client` | Runs Vite frontend client |
-| `npm run seed:dev` | Seeds a test account (`admin@wavelength.local` / `password123`) |
-| `npm test` | Runs complete Vitest test suite across all intelligence engines |
-| `npm run build` | Compiles TypeScript server and builds Vite client bundle for production |
-| `npm run server` | Starts compiled production server from `server/dist` |
-| `npm run typecheck` | Validates TypeScript types across client and server |
-| `npm run lint` | Runs ESLint |
+| Framework | React 18 + TypeScript + Vite |
+| Styling | Tailwind CSS + custom CSS variables (no CSS-in-JS) |
+| Routing | React Router v6 |
+| Icons | Lucide React |
+| Animations | Framer Motion (scroll-in only, 150–250ms, respects prefers-reduced-motion) |
+| Data | Typed mock data (`src/data/landingData.ts`) — no backend |
 
 ---
 
-## Testing & Verification Scripts
+## Project Structure
 
-- `npx tsx server/scripts/test-thumbnail-designer.ts`: Tests the 2-Stage Thumbnail Design Studio across 10 cross-domain topics + Google HQ acceptance test.
-- `npx tsx server/scripts/test-image-pipeline.ts`: Tests the 12-domain image intelligence pipeline with live image rendering.
-- `npx tsx server/scripts/verify-topics.ts`: Validates end-to-end multilingual title and script generation across English, Hindi, and Hinglish.
+```
+src/
+├── components/
+│   ├── landing/          # Landing page sections
+│   │   ├── Navbar.tsx        Sticky nav with logo, links, CTAs
+│   │   ├── Hero.tsx          Heading + browser window UI mock
+│   │   ├── ThumbnailStudio.tsx  Text-left / visual-right section
+│   │   ├── ShortsStudio.tsx   Mirrored layout with hook + storyboard mocks
+│   │   ├── HowItWorks.tsx    3-step horizontal row
+│   │   ├── Pricing.tsx       3-tier cards (Free / ₹349 / ₹899)
+│   │   ├── FAQ.tsx           Animated accordion (5 questions)
+│   │   ├── FinalCTA.tsx      Centered CTA section
+│   │   └── Footer.tsx        Simple links footer
+│   └── ui/               Shared UI primitives (app-wide)
+├── data/
+│   └── landingData.ts    Typed mock data — FAQItem, PricingTier, HowItWorksStep, BulletFact
+├── pages/
+│   └── LandingPage.tsx   Assembles all landing sections
+├── styles/
+│   ├── landing.css       Design tokens + base styles for landing page
+│   ├── tokens.css        App design tokens
+│   └── premium.css       App shell styles
+└── App.tsx               Routing: "/" → LandingPage, "/auth" → AuthPage
+```
 
 ---
 
-## License
+## Design System — Landing Page
 
-MIT
+All tokens live in `src/styles/landing.css` under the `.wl-landing` scope:
+
+| Token | Value | Use |
+|---|---|---|
+| `--wl-bg` | `#0B0B0F` | Page background |
+| `--wl-surface` | `#14141A` | Card background |
+| `--wl-elevated` | `#1C1C24` | Elevated surfaces |
+| `--wl-border` | `#2A2A35` | Borders |
+| `--wl-accent` | `#FF6B4A` | Coral — primary CTA, active states, key numbers ONLY |
+| `--wl-accent-hover` | `#FF8566` | Coral hover |
+| `--wl-text` | `#F5F5F7` | Primary text |
+| `--wl-muted` | `#9A9AA8` | Secondary text |
+| `--wl-success` | `#34D399` | Pass / detected states |
+| `--wl-warning` | `#FBBF24` | Warnings |
+| `--wl-error` | `#F87171` | Error states |
+
+**Fonts:**
+- `Space Grotesk` 500–700 — all headings
+- `Inter` — body copy
+- `JetBrains Mono` — numbers, scores, labels, code
+
+**Design constraints (enforced):**
+- No gradients, no glow, no glassmorphism, no blurred blobs
+- Coral used ONLY on primary button, active left-border, and key metric numbers
+- Text is left-aligned except hero heading and final CTA
+- Layouts alternate: text-left / text-right / full-width
+- Section gap: 120px desktop, 72px mobile
+- Max content width: 1152px
+- Radius: 12px cards, 8px buttons/inputs
+- Animation: 150–250ms ease, scroll-in only via Framer Motion
+
+---
+
+## How to Run
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server (Vite)
+npm run dev
+
+# The app runs on http://localhost:5173
+# Unauthenticated users see the landing page at /
+# Auth page is at /auth
+```
+
+---
+
+## Routing
+
+| Path | Authenticated | Unauthenticated |
+|---|---|---|
+| `/` | Dashboard | Landing Page |
+| `/auth` | Redirect to `/` | Auth / Sign-up |
+| `/shorts`, `/packaging`, etc. | App pages | Redirect to `/` |
+
+---
+
+## Mock Data
+
+All landing page content is in `src/data/landingData.ts`:
+
+- `faqItems` — 5 FAQ entries
+- `pricingTiers` — Free / Creator (₹349) / Pro (₹899)
+- `howItWorksSteps` — 3 steps
+- `thumbnailFacts` — 3 bullet facts for the Thumbnail Studio section
+- `shortsFacts` — 3 bullet facts for the Shorts Studio section
+
+Replace these with API calls when the backend is ready.

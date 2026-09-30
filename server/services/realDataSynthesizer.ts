@@ -11,8 +11,17 @@ import { generateDynamicScript } from "./scriptIntelligence.js";
  * Extracts key search keywords from prompt / instructions.
  */
 function extractSearchQuery(prompt: string): string {
+  // If prompt has explicit Target Topic: "..." or Topic: "..."
+  const targetMatch = prompt.match(/target\s+topic:\s*["']?([^"'\n\r]+)["']?/i) ||
+                      prompt.match(/topic:\s*["']?([^"'\n\r]+)["']?/i);
+  if (targetMatch && targetMatch[1]?.trim().length >= 2) {
+    return targetMatch[1].trim().slice(0, 80);
+  }
+
   // Clean out common instruction phrases
   let clean = prompt
+    .replace(/target\s+topic:\s*["']?[^"'\n\r]+["']?/gi, "")
+    .replace(/raw\s+input:\s*["']?[^"'\n\r]+["']?/gi, "")
     .replace(/^video\s+topic:\s*/i, "")
     .replace(/^topic:\s*/i, "")
     .replace(/^video\s+title:\s*/i, "")
@@ -41,7 +50,46 @@ export async function synthesizeRealYouTubeResponse(
   const combined = `${system}\n${prompt}`.toLowerCase();
   const query = extractSearchQuery(prompt);
 
-  // 1. Competitor Intel (Competitor Schema)
+  // 1. Title & Psychological Framework Intelligence Pipeline (Checked FIRST to prevent misrouting)
+  if (
+    (combined.includes("title") && (combined.includes("framework") || combined.includes("psychological") || combined.includes("ctr"))) ||
+    (combined.includes("title") && !combined.includes("script") && !combined.includes("package") && !combined.includes("uploadfreq"))
+  ) {
+    const frameworks = [
+      { name: "Curiosity Gap", template: (q: string) => `The Secret Truth About ${q} (Nobody Tells You)` },
+      { name: "Beginner Pain Point", template: (q: string) => `Stop Wasting Money on ${q} (Do This Instead)` },
+      { name: "Contrarian", template: (q: string) => `Why 90% of People Fail at ${q}` },
+      { name: "Mistakes to Avoid", template: (q: string) => `5 Costly ${q} Mistakes You Must Avoid in 2026` },
+      { name: "Structured Roadmap", template: (q: string) => `The Complete Roadmap to Master ${q}` },
+      { name: "Personal Proof", template: (q: string) => `I Tested ${q} for 30 Days: Here's What Happened` },
+      { name: "80/20 Rule", template: (q: string) => `The 20% of ${q} That Delivers 80% of the Results` },
+      { name: "Transformation", template: (q: string) => `From Zero to Hero With ${q}: Step-by-Step Blueprint` },
+      { name: "Strategic Decision", template: (q: string) => `${q}: Budget vs High-End (What Actually Matters?)` },
+      { name: "Vulnerable Story", template: (q: string) => `My Honest Experience With ${q} (What I Wish I Knew)` },
+    ];
+
+    const generatedTitles = frameworks.map((f, idx) => ({
+      rank: idx + 1,
+      title: f.template(query),
+      angle: f.name,
+      style: f.name,
+      ctrPotential: (idx < 3 ? "Very High" : idx < 7 ? "High" : "Medium") as "Very High" | "High" | "Medium",
+      score: 96 - idx * 2,
+      ctr: 96 - idx * 2,
+      whyItWorks: `Hooks viewer curiosity with a high-leverage ${f.name} framing and clear value proposition.`,
+      framework: f.name,
+    }));
+
+    return JSON.stringify({
+      topic: query,
+      audience: `Viewers and creators interested in ${query}`,
+      opportunity: `Actionable, high-CTR execution and practical benchmarks for ${query}`,
+      observedAngles: ["Beginner Roadmaps", "Common Pitfalls", "Realistic Progression"],
+      titles: generatedTitles,
+    });
+  }
+
+  // 2. Competitor Intel (Competitor Schema)
   if (combined.includes("competitor") || combined.includes("channel")) {
     const intel = await getYouTubeChannelIntel(query);
     if (intel) {
@@ -71,7 +119,53 @@ export async function synthesizeRealYouTubeResponse(
     }
   }
 
-  // 2. Trend Discovery (Trend Schema Array)
+  // 3. Thumbnail Blueprint & Visual Story Intelligence
+  if (
+    combined.includes("visualstory") ||
+    combined.includes("textstrategy") ||
+    (combined.includes("thumbnail") && (combined.includes("blueprint") || combined.includes("strategy") || combined.includes("focalsubject")))
+  ) {
+    const rawWords = query.split(/\s+/).filter(Boolean);
+    const shortHook = rawWords.slice(0, 2).join(" ").toUpperCase() || "WATCH THIS";
+    return JSON.stringify({
+      objective: {
+        type: "Curiosity",
+        oneSecondPromise: `Discover the critical facts and real-world breakdown of ${query}`,
+        emotionalTrigger: "High Curiosity & Authority",
+      },
+      visualStory: {
+        narrative: `Dramatic, high-definition visual composition centered around ${query} with clean focus and balanced contrast.`,
+        primaryFocalSubject: `Cinematic hero visual showcasing ${query} with rich detail and sharp focus`,
+        secondaryElements: [`Contextual indicators and relevant details accentuating ${query}`],
+        backgroundEnvironment: `Authentic, atmospheric setting complementing ${query}`,
+        subjectPosition: "right",
+      },
+      textStrategy: {
+        overlayText: shortHook,
+        suggestedHooks: [
+          shortHook,
+          "THE TRUTH",
+          "DON'T DO THIS",
+          "STEP BY STEP",
+        ],
+        layoutZone: "left",
+        textColor: "#FFE600",
+        pillColor: "rgba(0, 0, 0, 0.85)",
+        textStroke: "3.5px #000000",
+        dropShadow: "0 8px 24px rgba(0,0,0,0.85)",
+        fontFamily: "Anton",
+      },
+      colorDirection: {
+        primary: "#38BDF8",
+        secondary: "#0F172A",
+        accent: "#F59E0B",
+        contrastRating: "Ultra High",
+      },
+      avoid: ["blurry background", "unreadable text", "generic smiling portrait"],
+    });
+  }
+
+  // 4. Trend Discovery (Trend Schema Array)
   if (combined.includes("trend") || combined.includes("growth") || combined.includes("source")) {
     const [topVideos, recentVideos] = await Promise.all([
       searchYouTubeVideos(query, { order: "viewCount", maxResults: 5 }),
@@ -112,7 +206,7 @@ export async function synthesizeRealYouTubeResponse(
     }
   }
 
-  // 3. Keyword Research (Keyword Schema Array)
+  // 4. Keyword Research (Keyword Schema Array - only when not a title/framework request)
   if (combined.includes("keyword") || combined.includes("intent") || combined.includes("opportunity")) {
     const videos = await searchYouTubeVideos(query, { order: "relevance", maxResults: 8 });
     if (videos.length > 0) {
@@ -144,25 +238,6 @@ export async function synthesizeRealYouTubeResponse(
         return JSON.stringify(keywords);
       }
     }
-  }
-
-  // 4. Research-Driven Title Intelligence Pipeline (Title Schema Array)
-  if (combined.includes("title")) {
-    const intelResult = await runTitleIntelligencePipeline(prompt);
-    
-    // Map to schema format including both new research-grade fields and backward-compatible fields
-    const titlesPayload = intelResult.titles.map((t) => ({
-      rank: t.rank,
-      title: t.title,
-      angle: t.angle,
-      style: t.angle,
-      ctrPotential: t.ctrPotential,
-      ctr: t.score,
-      score: t.score,
-      whyItWorks: t.whyItWorks,
-    }));
-
-    return JSON.stringify(titlesPayload);
   }
 
   // 5. Idea Generator (Rich Idea Schema Array)

@@ -1,11 +1,13 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Radar, Loader2 } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
 import { StoreProvider, useStore } from "./lib/store";
 import Sidebar from "./components/Sidebar";
 import TopNav from "./components/TopNav";
+import BottomNav from "./components/BottomNav";
 import Chat from "./components/Chat";
 import AuthPage from "./pages/AuthPage";
+import LandingPage from "./pages/LandingPage";
 import { ToastProvider } from "./components/ui";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -21,17 +23,102 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 
 function Splash() {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
-      <Radar size={28} color="var(--accent)" strokeWidth={2.5} />
-      <Loader2 size={20} className="spin" color="var(--accent)" />
+    <div
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "100vh",
+        padding: 24,
+        background: "var(--bg)",
+      }}
+    >
+      <div
+        className="card scale-in"
+        style={{
+          padding: "24px 32px",
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-md)",
+        }}
+      >
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            background: "var(--accent)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            flexShrink: 0,
+          }}
+        >
+          <Zap size={22} strokeWidth={2.5} />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: "-0.025em",
+              color: "var(--text-primary)",
+            }}
+          >
+            Wavelength
+          </div>
+          <div
+            style={{
+              color: "var(--text-muted)",
+              fontSize: 12,
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Initializing studio…
+          </div>
+        </div>
+
+        <Loader2
+          size={16}
+          className="spin"
+          color="var(--accent)"
+          style={{ marginLeft: 8 }}
+        />
+      </div>
     </div>
   );
 }
 
 function PageFallback() {
   return (
-    <div style={{ padding: 40, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-      <Loader2 size={20} className="spin" color="var(--accent)" />
+    <div style={{ padding: 40, display: "grid", placeItems: "center", minHeight: "60vh" }}>
+      <div
+        className="card scale-in"
+        style={{
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <Loader2 size={16} className="spin" color="var(--accent)" />
+        <span
+          style={{
+            color: "var(--text-muted)",
+            fontSize: "var(--text-sm)",
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Loading…
+        </span>
+      </div>
     </div>
   );
 }
@@ -58,7 +145,17 @@ function AppLayout() {
   }, [mobileOpen]);
 
   if (booting) return <Splash />;
-  if (!user) return <AuthPage />;
+
+  // Unauthenticated: landing page at "/", auth at "/auth"
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -66,11 +163,17 @@ function AppLayout() {
       {mobileOpen && <div className="overlay" onClick={() => setMobileOpen(false)} />}
       <div className="app-main">
         <TopNav onMenuClick={() => setMobileOpen((o) => !o)} />
-        <main className="app-content">
+        <main className="app-content page-enter">
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              {/* Home / Command Center */}
+              {/* Home / Command Center & App Aliases */}
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/app" element={<DashboardPage />} />
+              <Route path="/app/thumbnail" element={<PackagingPage />} />
+              <Route path="/app/shorts" element={<ShortsPage />} />
+              <Route path="/app/strategy" element={<ResearchPage />} />
+              <Route path="/app/library" element={<ProjectsPage />} />
+              <Route path="/app/settings" element={<SettingsPage />} />
 
               {/* Studios */}
               <Route path="/shorts" element={<ShortsPage />} />
@@ -106,6 +209,7 @@ function AppLayout() {
             </Routes>
           </Suspense>
         </main>
+        <BottomNav />
       </div>
     </div>
   );
