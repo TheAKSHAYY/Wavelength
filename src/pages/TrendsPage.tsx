@@ -1,3 +1,4 @@
+// Trends — AI-powered trend analysis page
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, RefreshCw, ExternalLink, ArrowRight, Search } from "lucide-react";
