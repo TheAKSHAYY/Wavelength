@@ -2,6 +2,8 @@ node_modules
 dist
 server/dist
 data
+!src/data/
+!src/data/landingData.ts
 .env
 .DS_Store
 *.local
