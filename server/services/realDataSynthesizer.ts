@@ -4,7 +4,7 @@ import {
   formatViews,
   type YouTubeVideoInfo,
 } from "./youtubeResearch.js";
-import { runTitleIntelligencePipeline } from "./titleIntelligence.js";
+
 import { generateDynamicScript } from "./scriptIntelligence.js";
 
 /**
@@ -431,9 +431,9 @@ export async function synthesizeRealYouTubeResponse(
     let hook3 = `Why is almost everyone struggling with ${query} in 2026?`;
     let scriptVo = `Here is the one thing most people get completely backwards about ${query}. Most people focus on the wrong initial step, spending weeks on outdated templates. But when you look at top performers, they do one key thing differently: they build proof before applying. Here is how to fix this today. First, stop copying generic examples. Instead, create one verified, production-ready outcome. That single shift separates you from 90% of the crowd.`;
     let s1Vo = `Here is the one thing most people get completely backwards about ${query}.`;
-    let s2Vo = "Most people focus on the wrong initial step, spending weeks on outdated templates.";
-    let s3Vo = "But when you look at top performers, they do one key thing differently: they build proof before applying.";
-    let s4Vo = "First, stop copying generic examples. Instead, create one verified, production-ready outcome. That single shift separates you from 90% of the crowd.";
+    let _s2Vo = "Most people focus on the wrong initial step, spending weeks on outdated templates.";
+    let _s3Vo = "But when you look at top performers, they do one key thing differently: they build proof before applying.";
+    let _s4Vo = "First, stop copying generic examples. Instead, create one verified, production-ready outcome. That single shift separates you from 90% of the crowd.";
 
     if (isHinglish) {
       hook1 = `Agar aap ${query} mein struggle kar rahe ho, toh yeh 1 mistake notice karo.`;
@@ -441,18 +441,18 @@ export async function synthesizeRealYouTubeResponse(
       hook3 = `Kyun 90% log ${query} mein fail ho jaate hain? Sach yeh hai.`;
       scriptVo = `Agar aap ${query} mein struggle kar rahe ho, toh yeh 1 mistake notice karo. 90% log wahi purani generic approach follow karte hain aur weeks waste kar dete hain. Lekin top performers ek cheez alag karte hain: pehle real proof build karte hain. Aaj se yeh rule follow karo: generic templates copy karna band karo aur 1 solid practical outcome build karo. Yeh ek single shift aapko crowd se 10x aage kar dega.`;
       s1Vo = `Agar aap ${query} mein struggle kar rahe ho, toh yeh 1 mistake notice karo.`;
-      s2Vo = "90% log wahi purani generic approach follow karte hain aur weeks waste kar dete hain.";
-      s3Vo = "Lekin top performers ek cheez alag karte hain: pehle real proof build karte hain.";
-      s4Vo = "Aaj se generic templates copy karna band karo aur 1 solid practical outcome build karo. Yeh 1 shift aapko 10x aage karega.";
+      _s2Vo = "90% log wahi purani generic approach follow karte hain aur weeks waste kar dete hain.";
+      _s3Vo = "Lekin top performers ek cheez alag karte hain: pehle real proof build karte hain.";
+      _s4Vo = "Aaj se generic templates copy karna band karo aur 1 solid practical outcome build karo. Yeh 1 shift aapko 10x aage karega.";
     } else if (isHindi) {
       hook1 = `अगर आप ${query} में सफल होना चाहते हैं, तो यह एक गलती बिल्कुल मत करना।`;
       hook2 = `ज़्यादातर लोग ${query} में असफल क्यों होते हैं? यह है असली सच।`;
       hook3 = `अगर आप अभी ${query} सीख रहे हैं, तो पहले इस तरीके को समझें।`;
       scriptVo = `अगर आप ${query} में सफल होना चाहते हैं, तो यह एक गलती बिल्कुल मत करना। ज़्यादातर लोग पुराने और सामान्य तरीकों पर हफ़्तों बर्बाद कर देते हैं। लेकिन असली नतीजे पाने वाले पहले ठोस परिणाम बनाते हैं। आज से इस तरीके को बदलो, सामान्य उदाहरण छोड़ो और एक ठोस प्रोजेक्ट तैयार करो। यह एक बदलाव आपको 90% लोगों से आगे निकाल देगा।`;
       s1Vo = `अगर आप ${query} में सफल होना चाहते हैं, तो यह एक गलती बिल्कुल मत करना।`;
-      s2Vo = "ज़्यादातर लोग पुराने और सामान्य तरीकों पर हफ़्तों बर्बाद कर देते हैं।";
-      s3Vo = "लेकिन असली नतीजे पाने वाले पहले ठोस परिणाम और सबूत तैयार करते हैं।";
-      s4Vo = "आज से सामान्य उदाहरण छोड़ो और एक ठोस प्रोजेक्ट तैयार करो। यह एक बदलाव आपको 90% लोगों से आगे निकाल देगा।";
+      _s2Vo = "ज़्यादातर लोग पुराने और सामान्य तरीकों पर हफ़्तों बर्बाद कर देते हैं।";
+      _s3Vo = "लेकिन असली नतीजे पाने वाले पहले ठोस परिणाम और सबूत तैयार करते हैं।";
+      _s4Vo = "आज से सामान्य उदाहरण छोड़ो और एक ठोस प्रोजेक्ट तैयार करो। यह एक बदलाव आपको 90% लोगों से आगे निकाल देगा।";
     }
 
     return JSON.stringify({

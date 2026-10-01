@@ -10,7 +10,7 @@ import type { QualityIssue } from "./shortsQuality.js";
 export async function repairShortsBlueprint(
   blueprint: Omit<ShortsBlueprintOutput, "qualityAssessment">,
   issues: QualityIssue[],
-  duration: ShortsDuration
+  _duration: ShortsDuration
 ): Promise<Omit<ShortsBlueprintOutput, "qualityAssessment">> {
   const problemsList = issues
     .map((iss, i) => `${i + 1}. [${iss.type}] ${iss.message}`)

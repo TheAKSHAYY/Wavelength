@@ -35,7 +35,7 @@ router.post("/thumbnail", aiLimiter, requireAuthOrToken, async (req, res) => {
     imageUrl,
     overlayText = "MUST WATCH",
     textColor = "#FFE600",
-    pillColor = "rgba(0,0,0,0.84)",
+    pillColor: _pillColor = "rgba(0,0,0,0.84)",
     textSize = 72,
     fontFamily = "Anton",
     layoutZone = "left",

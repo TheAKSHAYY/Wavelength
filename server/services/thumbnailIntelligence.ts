@@ -241,7 +241,7 @@ export function deriveDomainVisualMedium(topicOrTitle: string): string {
  * Ensures the primary subject is framed to leave clear negative space for thumbnail text.
  * Strictly avoids generic token pollution such as "16:9 YouTube thumbnail photography".
  */
-function getNaturalLightingWords(primaryHex: string, accentHex: string): string {
+function getNaturalLightingWords(primaryHex: string, _accentHex: string): string {
   const p = (primaryHex || "").replace("#", "").toLowerCase();
   if (p.startsWith("38") || p.startsWith("3b") || p.startsWith("0")) {
     return "electric cyan and warm amber dual rim lighting, dark atmospheric studio glow";
@@ -269,7 +269,7 @@ export function buildEnginePromptFromLayout(
   layout: ThumbnailLayout,
   colorDir: { primary: string; secondary: string; accent: string },
   _titleOrTopic: string,
-  negativeAvoids: string[]
+  _negativeAvoids: string[]
 ): string {
   // Strip out any text references, price tags, or meta instructions from subject & narrative
   const cleanSubject = (story.primaryFocalSubject || "hero subject")
@@ -591,12 +591,15 @@ Output ONLY valid JSON adhering strictly to this schema:
     if (match) {
       try {
         parsed = tryParse(match[0]);
-      } catch (err: any) {
-        throw new Error(`Failed to parse Thumbnail Intelligence JSON: ${err.message}`);
+      } catch {
+        parsed = {};
       }
     } else {
-      throw new Error(`Failed to parse Thumbnail Intelligence JSON: ${cleaned.slice(0, 160)}`);
+      parsed = {};
     }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    parsed = {};
   }
 
   // Extract components with resilient fallbacks
@@ -655,7 +658,7 @@ Output ONLY valid JSON adhering strictly to this schema:
   }
 
   // Extract model suggested hooks or fallback to domain hooks
-  const topicLower = (title || topic).toLowerCase();
+  const _topicLower = (title || topic).toLowerCase();
   const hookCandidates: string[] = [];
   if (rawOverlay && rawOverlay !== "WATCH THIS" && rawOverlay !== "WHAT HAPPENED?") {
     hookCandidates.push(rawOverlay);

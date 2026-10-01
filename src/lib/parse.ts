@@ -9,7 +9,7 @@ function tryParse(s: string): ParseResult {
   } catch {
     // Attempt robust sanitization: remove trailing commas, fix unquoted keys
     try {
-      let sanitized = trimmed
+      const sanitized = trimmed
         .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas
         .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":'); // Quote unquoted keys
 

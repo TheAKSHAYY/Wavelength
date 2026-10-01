@@ -176,7 +176,7 @@ export function evaluateShortsQuality(
 
   // 6. Visual Relevance & Production Method Checking
   if (options?.scenes && options.scenes.length > 0) {
-    options.scenes.forEach((s, idx) => {
+    options.scenes.forEach((s, _idx) => {
       if (!s.visual || !s.visual.trim()) {
         visualRelevanceScore -= 1;
       }

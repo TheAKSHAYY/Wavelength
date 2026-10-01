@@ -115,7 +115,9 @@ export async function fetchGeneratedImage(
         try {
           const errData = await res.text();
           console.error("[IMAGE GENERATOR] Server error body:", errData);
-        } catch (e) {}
+        } catch {
+          // ignore error reading body
+        }
       }
     } catch (err: any) {
       console.error("[IMAGE GENERATOR] Network error fetching /api/gemini/generate-image:", err?.message || err);

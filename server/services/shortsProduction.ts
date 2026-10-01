@@ -28,7 +28,7 @@ export async function generateShortsProduction(
 
   const keyPointsList = strategy.keyPoints.map((p, i) => `${i + 1}. ${p}`).join("\n");
   const factsList = strategy.factsToCommunicate.length > 0
-    ? strategy.factsToCommunicate.map((f, i) => `- ${f}`).join("\n")
+    ? strategy.factsToCommunicate.map((f, _i) => `- ${f}`).join("\n")
     : "Standard verified topic facts";
 
   const systemPrompt = `You are Wavelength's Senior Shorts Production Director and Video Editor.

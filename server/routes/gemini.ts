@@ -11,9 +11,7 @@ interface GeminiPart {
   inlineData?: { mimeType: string; data: string };
 }
 
-interface GeminiCandidate {
-  content?: { parts?: GeminiPart[] };
-}
+
 
 function generateMockImageSvg(prompt: string, style: string = ""): string {
   // Let's create a beautiful gradient SVG based on the prompt/style
